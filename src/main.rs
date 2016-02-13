@@ -1,18 +1,18 @@
 extern crate semiring;
 
 use semiring::TropicalWeight;
-use std::f64;
 
 fn main() {
     {
-        let t = TropicalWeight::new(Some(12.0f64));
-        let tt = TropicalWeight::new(Some(f64::NAN));
+        let t = TropicalWeight::new(Some(12f64));
+        let tt = TropicalWeight::new(Some(13f64));
         println!("{}", tt.is_member());
-        let ttt = &t + &tt;
-        println!("{:?}\t{:?}\t{:?}", t, tt, ttt);
+        println!("{:?} ⊕ {:?} = {:?}", t, tt, &t + &tt); 
+        println!("{:?} ⊗ {:?} = {:?}", t, tt, &t * &tt); 
     }
     let t = TropicalWeight::new(Some(12.0f32));
     let tt = TropicalWeight::new(Some(13.0f32));
-    let ttt = &t + &tt;
-    println!("{:?}", ttt);
+    println!("{}", tt.is_member());
+    println!("{:?} ⊕ {:?} = {:?}", t, tt, &t + &tt); 
+    println!("{:?} ⊗ {:?} = {:?}", t, tt, &t * &tt); 
 }
