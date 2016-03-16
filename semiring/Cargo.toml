@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Daniel van Niekerk <dvn.demitasse@gmail.com>"]
 
 [dependencies]
+num = "*"
 
 [lib]
 name = "semiring"
