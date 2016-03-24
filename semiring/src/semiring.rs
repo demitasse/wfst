@@ -1,7 +1,7 @@
 extern crate rustc_serialize;
 use rustc_serialize::{Encodable};
 
-use std::ops::Add;
+use std::ops::{Add, Sub};
 use std::{f64, f32};
 use std::option::Option;
 
@@ -13,7 +13,7 @@ use std::option::Option;
 const DEFAULT_DELTA: f32 = 1.0 / 1024.0;
 
 // Internal float trait for our implementations over either f32 or f64
-pub trait Float<T>: Copy + PartialOrd + Add<Output=T> {
+pub trait Float<T>: Copy + PartialOrd + Add<Output=T> + Sub<Output=T> {
     fn zero() -> T;
     fn one() -> T;
     fn nan() -> T;
@@ -116,8 +116,15 @@ impl Float<f32> for f32 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Implementation of Weights to define different semirings
-pub trait Weight {
+const LEFT_SEMIRING: u64 = 0x01; // FORALL a,b,c: Times(c, Plus(a,b)) = Plus(Times(c,a), Times(c, b))
+const RIGHT_SEMIRING: u64 = 0x02; // FORALL a,b,c: Times(Plus(a,b), c) = Plus(Times(a,c), Times(b, c))
+const SEMIRING: u64 = LEFT_SEMIRING | RIGHT_SEMIRING;
+const COMMUTATIVE: u64 = 0x04; // FORALL a,b: Times(a,b) = Times(b,a)
+const IDEMPOTENT: u64 = 0x08; // FORALL a: Plus(a, a) = a
+const PATH: u64 = 0x10; // FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
+
+// Define Weight
+pub trait Weight<ReverseWeight> {
     fn is_member(&self) -> bool;
     fn plus(self, rhs: Self) -> Self;
     fn times(self, rhs: Self) -> Self;
@@ -125,11 +132,28 @@ pub trait Weight {
     fn one() -> Self;
     fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool;
     fn quantize(self, delta: Option<f32>) -> Self;
+    fn divide(self, rhs: Self, divtype: Option<DivideType>) -> Self;
+    fn reverse(self) -> ReverseWeight;
+    fn properties() -> u64;
 }
 
-//We give the struct "Copy semantics", i.e. it will be copied instead
-// of "moved". We may want to revisit this decision, but in the
-// meantime this is more in line with the behaviour of numeric types.
+pub enum DivideType {
+    Divleft,
+    Divright,
+    Divany
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Weight and thus also semiring implementations
+
+// We most of these structs "Copy semantics", i.e. it will be copied
+// instead of "moved". We may want to revisit this decision, but in
+// the meantime this is more in line with the behaviour of numeric
+// types.
+
+////////////////////////////////////////////////////////////////////////////////
+//TROPICAL SEMIRING: (min, +, inf, 0)
 #[derive(Copy, Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
 pub struct TropicalWeight<T: Float<T>> {
     val: Option<T>
@@ -141,7 +165,7 @@ impl<T: Float<T>> TropicalWeight<T> {
     }
 }
 
-impl<T: Float<T>> Weight for TropicalWeight<T> {
+impl<T: Float<T>> Weight<TropicalWeight<T>> for TropicalWeight<T> {
     fn plus(self, rhs: TropicalWeight<T>) -> TropicalWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {
             TropicalWeight::new(None)
@@ -195,4 +219,27 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
             TropicalWeight::new(None)
         }
     }
+
+    fn divide(self, rhs: TropicalWeight<T>, divtype: Option<DivideType>) -> TropicalWeight<T> {
+        if (!self.is_member()) || (!rhs.is_member()) {
+            TropicalWeight::new(None)
+        } else if rhs.val.unwrap() == T::infty() {
+            TropicalWeight::new(None)
+        } else if self.val.unwrap() == T::infty() {
+            TropicalWeight::new(Some(T::infty()))
+        } else {
+            TropicalWeight::new(Some(self.val.unwrap() - rhs.val.unwrap()))
+        }
+    }
+
+    fn reverse(self) -> TropicalWeight<T> {
+        self
+    }
+
+    fn properties() -> u64 {
+        SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH
+    }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//LOG SEMIRING: (log(e^-x + e^y), +, inf, 0)

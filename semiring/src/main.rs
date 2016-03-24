@@ -10,10 +10,12 @@ fn main() {
         println!("{}", tt.approx_eq(t, Some(1.0)));
         println!("{:?} ⊕ {:?} = {:?}", t, tt, t.plus(tt)); 
         println!("{:?} ⊗ {:?} = {:?}", t, tt, t.times(tt)); 
+        println!("t.times(tt).divide(tt, None) ==> {:?}", t.times(tt).divide(tt, None)); 
     }
     let t: TropicalWeight<f32> = TropicalWeight::one().quantize(None);
     let tt = TropicalWeight::zero().quantize(None);
     println!("{}", tt.is_member());
     println!("{:?} ⊕ {:?} = {:?}", t, tt, t.plus(tt)); 
-    println!("{:?} ⊗ {:?} = {:?}", t, tt, t.times(tt)); 
+    println!("{:?} ⊗ {:?} = {:?}", t, tt, t.times(tt));
+    println!("{:?}", t.times(tt).divide(tt, None)); 
 }
