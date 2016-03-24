@@ -9,8 +9,8 @@ use std::option::Option;
 ////////////////////////////////////////////////////////////////////////////////
 // Code for abstracting floats
 
-// Used to implement `approx_eq()`
-const DELTA: f32 = 1.0 / 1024.0;
+// Used to implement `approx_eq()` and `quantize()`
+const DEFAULT_DELTA: f32 = 1.0 / 1024.0;
 
 // Internal float trait for our implementations over either f32 or f64
 pub trait Float<T>: Copy + PartialOrd + Add<Output=T> {
@@ -19,7 +19,8 @@ pub trait Float<T>: Copy + PartialOrd + Add<Output=T> {
     fn nan() -> T;
     fn infty() -> T;
     fn neg_infty() -> T;
-    fn approx_eq(self, rhs: T) -> bool;
+    fn approx_eq(self, rhs: T, delta: Option<f32>) -> bool;
+    fn quantize(self, delta: Option<f32>) -> T;
 }
 
 impl Float<f64> for f64 {
@@ -43,8 +44,28 @@ impl Float<f64> for f64 {
         f64::NEG_INFINITY
     }
 
-    fn approx_eq(self, rhs: f64) -> bool {
-        self <= rhs + DELTA as f64 && rhs <= self + DELTA as f64
+    fn approx_eq(self, rhs: f64, delta: Option<f32>) -> bool {
+        let d = if let Some(d) = delta {
+            d as f64
+        } else {
+            DEFAULT_DELTA as f64
+        };
+        self <= rhs + d && rhs <= self + d
+    }
+
+    fn quantize(self, delta: Option<f32>) -> f64 {
+        let d = if let Some(d) = delta {
+            d as f64
+        } else {
+            DEFAULT_DELTA as f64
+        };
+        if self == f64::NEG_INFINITY ||
+            self == f64::INFINITY ||
+            self == f64::NAN {
+                self
+            } else {
+                (self / d + 0.5).floor() * d
+            }
     }
 }
 
@@ -69,8 +90,28 @@ impl Float<f32> for f32 {
         f32::NEG_INFINITY
     }
 
-    fn approx_eq(self, rhs: f32) -> bool {
-        self <= rhs + DELTA as f32 && rhs <= self + DELTA as f32
+    fn approx_eq(self, rhs: f32, delta: Option<f32>) -> bool {
+        let d = if let Some(d) = delta {
+            d
+        } else {
+            DEFAULT_DELTA
+        };
+        self <= rhs + d && rhs <= self + d
+    }
+
+    fn quantize(self, delta: Option<f32>) -> f32 {
+        let d = if let Some(d) = delta {
+            d
+        } else {
+            DEFAULT_DELTA
+        };
+        if self == f32::NEG_INFINITY ||
+            self == f32::INFINITY ||
+            self == f32::NAN {
+                self
+            } else {
+                (self / d + 0.5).floor() * d
+            }
     }
 }
 
@@ -82,7 +123,8 @@ pub trait Weight {
     fn times(self, rhs: Self) -> Self;
     fn zero() -> Self;
     fn one() -> Self;
-    fn approx_eq(self, rhs: Self) -> bool;
+    fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool;
+    fn quantize(self, delta: Option<f32>) -> Self;
 }
 
 //We give the struct "Copy semantics", i.e. it will be copied instead
@@ -134,15 +176,23 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
         }
     }
 
-    fn approx_eq(self, rhs: Self) -> bool {
+    fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool {
         if let Some(val) = self.val {
             if let Some(val2) = rhs.val {
-                val.approx_eq(val2)
+                val.approx_eq(val2, delta)
             } else {
                 false
             }
         } else {
             false
         }        
+    }
+
+    fn quantize(self, delta: Option<f32>) -> TropicalWeight<T> {
+        if let Some(val) = self.val {
+            TropicalWeight::new(Some(val.quantize(delta)))    
+        } else {
+            TropicalWeight::new(None)
+        }
     }
 }
