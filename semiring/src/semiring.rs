@@ -357,3 +357,93 @@ impl<T: Float<T>> Weight<LogWeight<T>> for LogWeight<T> {
         SEMIRING | COMMUTATIVE
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//MINMAX SEMIRING: (min, max, inf, -inf)
+#[derive(Copy, Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
+pub struct MinmaxWeight<T: Float<T>> {
+    val: Option<T>
+}
+
+impl<T: Float<T>> MinmaxWeight<T> {
+    pub fn new(val: Option<T>) -> MinmaxWeight<T> {
+        MinmaxWeight {val: val}
+    }
+}
+
+impl<T: Float<T>> Weight<MinmaxWeight<T>> for MinmaxWeight<T> {
+    fn plus(self, rhs: MinmaxWeight<T>) -> MinmaxWeight<T> {
+        if (!self.is_member()) || (!rhs.is_member()) {
+            MinmaxWeight::new(None)
+        } else if self.val < rhs.val {
+            self   //because MinmaxWeight is Copy
+        } else {
+            rhs    //because MinmaxWeight is Copy
+        }        
+    }
+
+    fn times(self, rhs: MinmaxWeight<T>) -> MinmaxWeight<T> {
+        if (!self.is_member()) || (!rhs.is_member()) {
+            MinmaxWeight::new(None)
+        } else if self.val >= rhs.val {
+            self   //because MinmaxWeight is Copy
+        } else {
+            rhs    //because MinmaxWeight is Copy
+        }        
+    }
+
+    fn zero() -> MinmaxWeight<T> {
+        MinmaxWeight::new(Some(T::infty()))
+    }
+
+    fn one() -> MinmaxWeight<T> {
+        MinmaxWeight::new(Some(T::neg_infty()))
+    }
+
+    fn is_member(&self) -> bool {
+        if let Some(val) = self.val {
+            !(val == T::nan())
+        } else {
+            false
+        }
+    }
+
+    fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool {
+        if let Some(val) = self.val {
+            if let Some(val2) = rhs.val {
+                val.approx_eq(val2, delta)
+            } else {
+                false
+            }
+        } else {
+            false
+        }        
+    }
+
+    fn quantize(self, delta: Option<f32>) -> MinmaxWeight<T> {
+        if let Some(val) = self.val {
+            MinmaxWeight::new(Some(val.quantize(delta)))    
+        } else {
+            MinmaxWeight::new(None)
+        }
+    }
+
+    // Defined only for special cases
+    fn divide(self, rhs: MinmaxWeight<T>, divtype: Option<DivideType>) -> MinmaxWeight<T> {
+        if (!self.is_member()) || (!rhs.is_member()) {
+            MinmaxWeight::new(None)
+        } else if self.val >= rhs.val {
+            self   //because MinmaxWeight is Copy
+        } else {
+            MinmaxWeight::new(None)
+        }
+    }
+
+    fn reverse(self) -> MinmaxWeight<T> {
+        self
+    }
+
+    fn properties() -> u64 {
+        SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH        
+    }
+}
