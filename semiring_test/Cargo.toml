@@ -1,0 +1,18 @@
+[package]
+name = "semiring_test"
+version = "0.1.0"
+authors = ["Daniel van Niekerk <dvn.demitasse@gmail.com>"]
+
+[dependencies]
+rand = "*"
+
+[dependencies.semiring]
+path = "../semiring"
+
+[lib]
+name = "semiring_test"
+path = "src/semiring_test.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"

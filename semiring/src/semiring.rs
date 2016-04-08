@@ -22,6 +22,8 @@ pub trait Float<T>: Copy + PartialOrd + Add<Output=T> + Sub<Output=T> {
     fn logexp(self) -> T;
     fn approx_eq(self, rhs: T, delta: Option<f32>) -> bool;
     fn quantize(self, delta: Option<f32>) -> T;
+    //DEMITASSE: At some point learn to do this in more generic/Rusty way
+    fn from_u32(u32) -> T;
 }
 
 impl Float<f64> for f64 {
@@ -73,6 +75,10 @@ impl Float<f64> for f64 {
             (self / d + 0.5).floor() * d
         }
     }
+
+    fn from_u32(i: u32) -> f64 {
+        i as f64
+    }
 }
 
 impl Float<f32> for f32 {
@@ -123,6 +129,10 @@ impl Float<f32> for f32 {
         } else {
             (self / d + 0.5).floor() * d
         }
+    }
+
+    fn from_u32(i: u32) -> f32 {
+        i as f32
     }
 }
 
