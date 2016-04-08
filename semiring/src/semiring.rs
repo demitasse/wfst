@@ -157,7 +157,6 @@ pub trait Weight {
     fn divide(self, rhs: Self, divtype: Option<DivideType>) -> Self;
     fn reverse(self) -> Self::ReverseWeight;
     fn properties() -> u64;
-    fn from_u32(u32) -> Self;
 }
 
 pub enum DivideType {
@@ -268,10 +267,6 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH
     }
-
-    fn from_u32(n: u32) -> TropicalWeight<T> {
-        TropicalWeight::new(Some(T::from_u32(n)))
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -376,10 +371,6 @@ impl<T: Float<T>> Weight for LogWeight<T> {
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE
     }
-
-    fn from_u32(n: u32) -> LogWeight<T> {
-        LogWeight::new(Some(T::from_u32(n)))
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -471,9 +462,5 @@ impl<T: Float<T>> Weight for MinmaxWeight<T> {
 
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH        
-    }
-
-    fn from_u32(n: u32) -> MinmaxWeight<T> {
-        MinmaxWeight::new(Some(T::from_u32(n)))
     }
 }
