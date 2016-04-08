@@ -11,22 +11,17 @@ fn main() {
     let seed: &[_] = &[7,7,7];
     let mut rng: StdRng = SeedableRng::from_seed(seed);
 
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f64>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f64>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f64>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f64>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f64>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f64>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
-    println!("Hello Weight: {:?}", rng.genweight(false) as TropicalWeight<f32>);
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f64>>(false));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f64>>(false));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f64>>(false));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f64>>(false));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
+    println!("Hello Weight: {:?}", rng.genweight::<TropicalWeight<f32>>(true));
 }

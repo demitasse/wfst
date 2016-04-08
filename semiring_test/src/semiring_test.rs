@@ -7,21 +7,22 @@ use semiring::*;
 //This bounds the random integers generated: [0, K)
 const K: u32 = 5;
 
-pub trait RandomWeightGenerator<T> {
-    fn genweight(&mut self, allow_zero: bool) -> T;
-}
+// //Will no try to move the from_u32() implementation here
+// trait RandomWeight: Weight {
 
-// pub trait FloatWeight {
-//     fn from_u32(u32) -> Self;
 // }
 
-impl<T: Float<T>> RandomWeightGenerator<TropicalWeight<T>> for StdRng {
-    fn genweight(&mut self, allow_zero: bool) -> TropicalWeight<T> {
+pub trait RandomWeightGenerator {
+    fn genweight<T: Weight>(&mut self, allow_zero: bool) -> T;
+}
+
+impl RandomWeightGenerator for StdRng {
+    fn genweight<T: Weight>(&mut self, allow_zero: bool) -> T {
         let n = self.gen_range(0, K + allow_zero as u32);
         if allow_zero && n == K {
-            TropicalWeight::zero()
+            T::zero()
         } else {
-            TropicalWeight::new(Some(T::from_u32(n)))
+            T::from_u32(n)
         }
     }
 }

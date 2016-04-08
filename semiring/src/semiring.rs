@@ -145,7 +145,8 @@ const IDEMPOTENT: u64 = 0x08; // FORALL a: Plus(a, a) = a
 const PATH: u64 = 0x10; // FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
 
 // Define Weight
-pub trait Weight<ReverseWeight> {
+pub trait Weight {
+    type ReverseWeight;
     fn is_member(&self) -> bool;
     fn plus(self, rhs: Self) -> Self;
     fn times(self, rhs: Self) -> Self;
@@ -154,8 +155,9 @@ pub trait Weight<ReverseWeight> {
     fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool;
     fn quantize(self, delta: Option<f32>) -> Self;
     fn divide(self, rhs: Self, divtype: Option<DivideType>) -> Self;
-    fn reverse(self) -> ReverseWeight;
+    fn reverse(self) -> Self::ReverseWeight;
     fn properties() -> u64;
+    fn from_u32(u32) -> Self;
 }
 
 pub enum DivideType {
@@ -186,7 +188,9 @@ impl<T: Float<T>> TropicalWeight<T> {
     }
 }
 
-impl<T: Float<T>> Weight<TropicalWeight<T>> for TropicalWeight<T> {
+impl<T: Float<T>> Weight for TropicalWeight<T> {
+    type ReverseWeight = TropicalWeight<T>;
+
     fn plus(self, rhs: TropicalWeight<T>) -> TropicalWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {
             TropicalWeight::new(None)
@@ -264,6 +268,10 @@ impl<T: Float<T>> Weight<TropicalWeight<T>> for TropicalWeight<T> {
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH
     }
+
+    fn from_u32(n: u32) -> TropicalWeight<T> {
+        TropicalWeight::new(Some(T::from_u32(n)))
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -279,7 +287,9 @@ impl<T: Float<T>> LogWeight<T> {
     }
 }
 
-impl<T: Float<T>> Weight<LogWeight<T>> for LogWeight<T> {
+impl<T: Float<T>> Weight for LogWeight<T> {
+    type ReverseWeight = LogWeight<T>;
+
     fn plus(self, rhs: LogWeight<T>) -> LogWeight<T> {
         let (v1, v2) = (self.val.unwrap_or(T::nan()), rhs.val.unwrap_or(T::nan()));
         if v1 == T::infty() {
@@ -366,6 +376,10 @@ impl<T: Float<T>> Weight<LogWeight<T>> for LogWeight<T> {
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE
     }
+
+    fn from_u32(n: u32) -> LogWeight<T> {
+        LogWeight::new(Some(T::from_u32(n)))
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -381,7 +395,9 @@ impl<T: Float<T>> MinmaxWeight<T> {
     }
 }
 
-impl<T: Float<T>> Weight<MinmaxWeight<T>> for MinmaxWeight<T> {
+impl<T: Float<T>> Weight for MinmaxWeight<T> {
+    type ReverseWeight = MinmaxWeight<T>;
+
     fn plus(self, rhs: MinmaxWeight<T>) -> MinmaxWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {
             MinmaxWeight::new(None)
@@ -455,5 +471,9 @@ impl<T: Float<T>> Weight<MinmaxWeight<T>> for MinmaxWeight<T> {
 
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH        
+    }
+
+    fn from_u32(n: u32) -> MinmaxWeight<T> {
+        MinmaxWeight::new(Some(T::from_u32(n)))
     }
 }
