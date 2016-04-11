@@ -4,7 +4,7 @@ use rand::{Rng, StdRng};
 extern crate semiring;
 use semiring::*;
 
-//////////////////////////////DEFINE HOW DIFFERENT WEIGHTS CAN BE CREATED FROM U32
+//////////////////////////DEFINE HOW DIFFERENT WEIGHTS CAN BE CREATED FROM U32
 pub trait RandomWeight: Weight {
     fn from_u32(u32) -> Self;
 }

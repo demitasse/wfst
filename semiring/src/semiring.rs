@@ -144,14 +144,16 @@ const COMMUTATIVE: u64 = 0x04; // FORALL a,b: Times(a,b) = Times(b,a)
 const IDEMPOTENT: u64 = 0x08; // FORALL a: Plus(a, a) = a
 const PATH: u64 = 0x10; // FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
 
-// Define Weight
-pub trait Weight {
+// Define Weight (demit: may want to rethink having this `Copy`)
+pub trait Weight: Copy {
     type ReverseWeight;
     fn is_member(&self) -> bool;
     fn plus(self, rhs: Self) -> Self;
     fn times(self, rhs: Self) -> Self;
     fn zero() -> Self;
     fn one() -> Self;
+    fn none() -> Self;
+    fn eq(self, rhs: Self) -> bool;
     fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool;
     fn quantize(self, delta: Option<f32>) -> Self;
     fn divide(self, rhs: Self, divtype: Option<DivideType>) -> Self;
@@ -217,12 +219,28 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
         TropicalWeight::new(Some(T::zero()))
     }
 
+    fn none() -> TropicalWeight<T> {
+        TropicalWeight::new(None)
+    }
+
     fn is_member(&self) -> bool {
         if let Some(val) = self.val {
             !(val == T::nan() || val == T::neg_infty())
         } else {
             false
         }
+    }
+
+    fn eq(self, rhs: Self) -> bool {
+        if let Some(val) = self.val {
+            if let Some(val2) = rhs.val {
+                val == val2
+            } else {
+                false
+            }
+        } else {
+            false
+        }        
     }
 
     fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool {
@@ -321,12 +339,28 @@ impl<T: Float<T>> Weight for LogWeight<T> {
         LogWeight::new(Some(T::zero()))
     }
 
+    fn none() -> LogWeight<T> {
+        LogWeight::new(None)
+    }
+
     fn is_member(&self) -> bool {
         if let Some(val) = self.val {
             !(val == T::nan() || val == T::neg_infty())
         } else {
             false
         }
+    }
+
+    fn eq(self, rhs: Self) -> bool {
+        if let Some(val) = self.val {
+            if let Some(val2) = rhs.val {
+                val == val2
+            } else {
+                false
+            }
+        } else {
+            false
+        }        
     }
 
     fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool {
@@ -417,12 +451,28 @@ impl<T: Float<T>> Weight for MinmaxWeight<T> {
         MinmaxWeight::new(Some(T::neg_infty()))
     }
 
+    fn none() -> MinmaxWeight<T> {
+        MinmaxWeight::new(None)
+    }
+
     fn is_member(&self) -> bool {
         if let Some(val) = self.val {
             !(val == T::nan())
         } else {
             false
         }
+    }
+
+    fn eq(self, rhs: Self) -> bool {
+        if let Some(val) = self.val {
+            if let Some(val2) = rhs.val {
+                val == val2
+            } else {
+                false
+            }
+        } else {
+            false
+        }        
     }
 
     fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool {
