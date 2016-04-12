@@ -22,8 +22,8 @@ pub trait Float<T>: Copy + PartialOrd + Add<Output=T> + Sub<Output=T> {
     fn logexp(self) -> T;
     fn approx_eq(self, rhs: T, delta: Option<f32>) -> bool;
     fn quantize(self, delta: Option<f32>) -> T;
-    //DEMITASSE: At some point learn to do this in more generic/Rusty way
     fn from_u32(u32) -> T;
+    fn get_precision() -> &'static str;
 }
 
 impl Float<f64> for f64 {
@@ -78,6 +78,10 @@ impl Float<f64> for f64 {
 
     fn from_u32(i: u32) -> f64 {
         i as f64
+    }
+
+    fn get_precision() -> &'static str {
+        "64"
     }
 }
 
@@ -134,15 +138,19 @@ impl Float<f32> for f32 {
     fn from_u32(i: u32) -> f32 {
         i as f32
     }
+
+    fn get_precision() -> &'static str {
+        "32"
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-const LEFT_SEMIRING: u64 = 0x01; // FORALL a,b,c: Times(c, Plus(a,b)) = Plus(Times(c,a), Times(c, b))
-const RIGHT_SEMIRING: u64 = 0x02; // FORALL a,b,c: Times(Plus(a,b), c) = Plus(Times(a,c), Times(b, c))
-const SEMIRING: u64 = LEFT_SEMIRING | RIGHT_SEMIRING;
-const COMMUTATIVE: u64 = 0x04; // FORALL a,b: Times(a,b) = Times(b,a)
-const IDEMPOTENT: u64 = 0x08; // FORALL a: Plus(a, a) = a
-const PATH: u64 = 0x10; // FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
+pub const LEFT_SEMIRING: u64 = 0x01; // FORALL a,b,c: Times(c, Plus(a,b)) = Plus(Times(c,a), Times(c, b))
+pub const RIGHT_SEMIRING: u64 = 0x02; // FORALL a,b,c: Times(Plus(a,b), c) = Plus(Times(a,c), Times(b, c))
+pub const SEMIRING: u64 = LEFT_SEMIRING | RIGHT_SEMIRING;
+pub const COMMUTATIVE: u64 = 0x04; // FORALL a,b: Times(a,b) = Times(b,a)
+pub const IDEMPOTENT: u64 = 0x08; // FORALL a: Plus(a, a) = a
+pub const PATH: u64 = 0x10; // FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
 
 // Define Weight (demit: may want to rethink having this `Copy`)
 pub trait Weight: Copy {
@@ -159,6 +167,7 @@ pub trait Weight: Copy {
     fn divide(self, rhs: Self, divtype: Option<DivideType>) -> Self;
     fn reverse(self) -> Self::ReverseWeight;
     fn properties() -> u64;
+    fn wtype() -> String;
 }
 
 pub enum DivideType {
@@ -285,6 +294,10 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH
     }
+
+    fn wtype() -> String {
+        format!("tropical{}", T::get_precision())
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -304,15 +317,19 @@ impl<T: Float<T>> Weight for LogWeight<T> {
     type ReverseWeight = LogWeight<T>;
 
     fn plus(self, rhs: LogWeight<T>) -> LogWeight<T> {
-        let (v1, v2) = (self.val.unwrap_or(T::nan()), rhs.val.unwrap_or(T::nan()));
-        if v1 == T::infty() {
-            rhs   //because LogWeight is Copy
-        } else if v2 == T::infty() {
-            self  //because LogWeight is Copy
-        } else if v1 > v2 {
-            LogWeight::new(Some(v2 - (v1 - v2).logexp()))
+        if (!self.is_member()) || (!rhs.is_member()) {
+            LogWeight::new(None)
         } else {
-            LogWeight::new(Some(v1 - (v2 - v1).logexp()))
+            let (v1, v2) = (self.val.unwrap(), rhs.val.unwrap());
+            if v1 == T::infty() {
+                rhs   //because LogWeight is Copy
+            } else if v2 == T::infty() {
+                self  //because LogWeight is Copy
+            } else if v1 > v2 {
+                LogWeight::new(Some(v2 - (v1 - v2).logexp()))
+            } else {
+                LogWeight::new(Some(v1 - (v2 - v1).logexp()))
+            }
         }
     }
 
@@ -404,6 +421,10 @@ impl<T: Float<T>> Weight for LogWeight<T> {
 
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE
+    }
+
+    fn wtype() -> String {
+        format!("log{}", T::get_precision())
     }
 }
 
@@ -512,5 +533,9 @@ impl<T: Float<T>> Weight for MinmaxWeight<T> {
 
     fn properties() -> u64 {
         SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH        
+    }
+
+    fn wtype() -> String {
+        format!("minmax{}", T::get_precision())
     }
 }
