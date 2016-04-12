@@ -176,6 +176,13 @@ pub enum DivideType {
     Divany
 }
 
+pub fn power<T: Weight>(w: T, n: u8) -> T {
+    let mut result = T::one();
+    for _ in 0..n {
+        result = result.times(w);
+    }
+    result
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Weight and thus also semiring implementations
