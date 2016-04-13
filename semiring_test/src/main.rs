@@ -8,8 +8,14 @@ use rand::{SeedableRng, StdRng};
 use semiring_test::{RandomWeight, RandomWeightGenerator};
 use semiring::*;
 
+extern crate rustc_serialize;
+use rustc_serialize::{Encodable, Decodable};
+extern crate bincode;
+use bincode::SizeLimit;
+use bincode::rustc_serialize::{encode, decode};
+
 // Tests (plus, times, zero, one) defines a commutative semiring.
-fn test_semiring<T: RandomWeight>(w1: T, w2: T, w3: T) {
+fn test_semiring<T: Weight>(w1: T, w2: T, w3: T) {
     // Checks that the operations are closed.
     assert!(w1.plus(w2).is_member());
     assert!(w1.times(w2).is_member());
@@ -76,7 +82,7 @@ fn test_semiring<T: RandomWeight>(w1: T, w2: T, w3: T) {
 }
 
 // Tests division operations
-fn test_division<T: RandomWeight>(w1: T, w2: T) {
+fn test_division<T: Weight>(w1: T, w2: T) {
     let p = w1.times(w2);
 
     if T::properties() & LEFT_SEMIRING != 0 {
@@ -105,22 +111,46 @@ fn test_division<T: RandomWeight>(w1: T, w2: T) {
     }
 }
 
-// // Tests division operations
-// fn test_reverse<T: RandomWeight>(w1: T, w2: T) {
-//     let rw1 = w1.reverse();
-//     let rw2 = w2.reverse();
+fn test_reverse<T: Weight>(w1: T, w2: T) {
+    let rw1 = w1.reverse();
+    let rw2 = w2.reverse();
 
-//     assert!(rw1.reverse().eq(w1));
-//     assert!(w1.plus(w2).reverse().eq(rw1.plus(rw2)));
-//     assert!(w1.times(w2).reverse().eq(rw1.times(rw2)));
-// }
+    assert!(rw1.reverse().eq(w1)); 
+    assert!(w1.plus(w2).reverse().eq(rw1.plus(rw2)));
+    assert!(w1.times(w2).reverse().eq(rw1.times(rw2)));
+}
+
+// Tests eq() is an equivalence relation.
+fn test_equality<T: Weight>(w1: T, w2: T, w3: T) {
+    // Checks reflexivity.
+    assert!(w1.eq(w1));
+
+    // Checks symmetry.
+    assert!(w1.eq(w2) == w2.eq(w1));
+
+    // Checks transitivity.
+    if w1.eq(w2) && w2.eq(w3) {
+        assert!(w1.eq(w3));
+    }
+}
+
+fn test_io<T: Weight + Encodable + Decodable>(w1: T) {
+    let encoded = encode(&w1, SizeLimit::Infinite).unwrap();
+    let ww = decode(&encoded).unwrap();
+    assert!(w1.eq(ww));
+}
+
+fn test_copy<T: Weight>(w1: T) {
+    let ww: T = w1; //This should copy since Weight is Copy
+    assert!(w1.eq(ww));
+}
 
 // Test a variety of identities and properties that must hold for the
 // Weight implementation to be well-defined.  Note in the tests we use
 // approx_eq() rather than == where the weights might be inexact.
-fn test<T: RandomWeight + Debug>(rng: &mut StdRng,
-                                 n_iterations: u32,
-                                 test_div: bool) {
+fn test<T: RandomWeight + Debug + Encodable + Decodable>(rng: &mut StdRng,
+                                                         n_iterations: u32,
+                                                         test_div: bool) {
     for _ in 0..n_iterations {
         let w1 = rng.genweight::<T>(true);
         let w2 = rng.genweight::<T>(true);
@@ -133,8 +163,10 @@ fn test<T: RandomWeight + Debug>(rng: &mut StdRng,
         if test_div {
             test_division(w1, w2);
         }
-//        test_reverse(w1, w2);
-        //DEMITASSE: TODO
+        test_reverse(w1, w2);
+        test_equality(w1, w2, w3);
+        test_io(w1);
+        test_copy(w1);
     }
 }
     
@@ -143,7 +175,7 @@ fn main() {
     let seed: &[_] = &[7,7,7];
     let mut rng: StdRng = SeedableRng::from_seed(seed);
 
-    let n_iterations = 100000;
+    let n_iterations = 1000000;
 
     println!("Seed: {:?}", seed);
     println!("============================================================\n");

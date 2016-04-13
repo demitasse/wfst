@@ -1,5 +1,4 @@
 extern crate rustc_serialize;
-use rustc_serialize::{Encodable};
 
 use std::ops::{Add, Sub};
 use std::{f64, f32};
@@ -154,7 +153,6 @@ pub const PATH: u64 = 0x10; // FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
 
 // Define Weight (demit: may want to rethink having this `Copy`)
 pub trait Weight: Copy {
-    type ReverseWeight;
     fn is_member(&self) -> bool;
     fn plus(self, rhs: Self) -> Self;
     fn times(self, rhs: Self) -> Self;
@@ -165,7 +163,7 @@ pub trait Weight: Copy {
     fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool;
     fn quantize(self, delta: Option<f32>) -> Self;
     fn divide(self, rhs: Self, divtype: Option<DivideType>) -> Self;
-    fn reverse(self) -> Self::ReverseWeight;
+    fn reverse(self) -> Self;
     fn properties() -> u64;
     fn wtype() -> String;
 }
@@ -206,7 +204,6 @@ impl<T: Float<T>> TropicalWeight<T> {
 }
 
 impl<T: Float<T>> Weight for TropicalWeight<T> {
-    type ReverseWeight = TropicalWeight<T>;
 
     fn plus(self, rhs: TropicalWeight<T>) -> TropicalWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {
@@ -321,7 +318,6 @@ impl<T: Float<T>> LogWeight<T> {
 }
 
 impl<T: Float<T>> Weight for LogWeight<T> {
-    type ReverseWeight = LogWeight<T>;
 
     fn plus(self, rhs: LogWeight<T>) -> LogWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {
@@ -449,7 +445,6 @@ impl<T: Float<T>> MinmaxWeight<T> {
 }
 
 impl<T: Float<T>> Weight for MinmaxWeight<T> {
-    type ReverseWeight = MinmaxWeight<T>;
 
     fn plus(self, rhs: MinmaxWeight<T>) -> MinmaxWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {

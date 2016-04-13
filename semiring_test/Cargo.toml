@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Daniel van Niekerk <dvn.demitasse@gmail.com>"]
 
 [dependencies]
+rustc-serialize = "*"
+bincode = "*"
 rand = "*"
 
 [dependencies.semiring]
