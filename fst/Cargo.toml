@@ -1,0 +1,18 @@
+[package]
+name = "fst"
+version = "0.1.0"
+authors = ["Daniel van Niekerk <dvn.demitasse@gmail.com>"]
+
+[dependencies]
+rustc-serialize = "*"
+
+[dependencies.semiring]
+path = "../semiring"
+
+[lib]
+name = "fst"
+path = "src/fst.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
