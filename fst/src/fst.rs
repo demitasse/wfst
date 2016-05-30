@@ -61,23 +61,35 @@ impl<W: Weight> State for VecState<W> {
 }
 
 
-//DEMIT: Need to implement ArcIterator
+////////// Arc Iterator
+#[derive(Debug)]
+pub struct VecArcIterator<'a, W: 'a + Weight> {
+    state: &'a VecState<W>,
+    arcindex: usize
+}
 
+impl<'a, W: Weight> Iterator for VecArcIterator<'a, W> {
+    type Item = &'a Arc<W>;
+
+    fn next(&mut self) -> Option<&'a Arc<W>> {
+        unimplemented!()
+    }
+}
 
 ////////// FST
 // This interface is informed by Section 4.1 of:
 // Mehryar Mohri, Fernando Pereira, and Michael Riley. "The design
 // principles of a weighted finite-state transducer library."
 // Theoretical Computer Science 231.1 (2000): 17-32.
-pub trait Fst<W: Weight> {
+pub trait Fst<'a, W: Weight> {
     type I: Iterator;
     fn start_state(&self) -> Option<StateId>;
     fn final_weight(&self, StateId) -> W;
-//    fn arc_iter(&self, StateId) -> Self::I;
+    fn arc_iter(&'a self, StateId) -> Self::I;
 }
 
-impl <W: Weight> Fst<W> for VecFst<W> {
-    type I = std::vec::IntoIter<Arc<W>>;
+impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
+    type I = VecArcIterator<'a, W>;
 
     fn start_state(&self) -> Option<StateId> {
         self.startstate
@@ -87,19 +99,20 @@ impl <W: Weight> Fst<W> for VecFst<W> {
         self.states[id].finalweight //Weight is Copy
     }
 
-    // fn arc_iter(&self, id: StateId) -> std::vec::IntoIter<Arc<W>> {
-    //     let state = self.states[id];
-    //     state.into_iter()
-    // }
+    fn arc_iter(&'a self, id: StateId) -> VecArcIterator<'a, W> {
+        VecArcIterator { state: &self.states[id],
+                         arcindex: 0 }
+    }
 }
 
-pub trait MutableFst<W: Weight>: Fst<W> {
+pub trait MutableFst<'a, W: Weight>: Fst<'a, W> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
+    fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W);
 }
 
-impl <W: Weight> MutableFst<W> for VecFst<W> {  
-    
+impl <'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {  
+
     fn set_start(&mut self, id: StateId) {
         assert!(id < self.states.len());
         self.startstate = Some(id);
@@ -109,6 +122,12 @@ impl <W: Weight> MutableFst<W> for VecFst<W> {
         let id = self.states.len();
         self.states.push(VecState::new(id, finalweight));
         id
+    }
+
+    fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W) {
+        assert!(source < self.states.len());
+        assert!(target < self.states.len());
+        self.states[source].arcs.push(Arc::new(ilabel, olabel, weight, target));
     }
 }
 
