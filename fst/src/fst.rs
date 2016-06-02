@@ -11,13 +11,14 @@ use semiring::*;
 // Mehryar Mohri, Fernando Pereira, and Michael Riley. "The design
 // principles of a weighted finite-state transducer library."
 // Theoretical Computer Science 231.1 (2000): 17-32.
+pub type Label = usize;
 pub type StateId = usize;
 
 pub trait Fst<'a, W: Weight> {
-    type AI: Iterator;
+    type I: Iterator;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
-    fn arc_iter(&'a self, StateId) -> Self::AI;
+    fn arc_iter(&'a self, StateId) -> Self::I;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
@@ -33,28 +34,50 @@ pub trait ExpandedFst<'a, W: Weight>: Fst<'a, W> {
     fn get_numstates(&self) -> usize;
 }
 
+pub trait Arc<W: Weight> {
+    fn ilabel(&self) -> Label;
+    fn olabel(&self) -> Label;
+    fn weight(&self) -> W;
+    fn nextstate(&self) -> StateId;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////// FST IMPLEMENTATION 1: A Mutable FST using Vectors
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////// ARC
-pub type Label = usize;
-
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
-pub struct Arc<W: Weight> {
+pub struct StdArc<W: Weight> {
     ilabel: Label,
     olabel: Label,
     weight: W,
     nextstate: StateId,
 }
 
-impl<W: Weight> Arc<W> {
-    pub fn new(i: Label, o: Label, w: W, s: StateId) -> Arc<W> {
-        Arc { ilabel: i,
-              olabel: o,
-              weight: w,
-              nextstate: s }
+impl<W: Weight> Arc<W> for StdArc<W> {
+    fn ilabel(&self) -> Label {
+        self.ilabel
+    }
+
+    fn olabel(&self) -> Label {
+        self.olabel
+    }
+
+    fn weight(&self) -> W {
+        self.weight
+    }
+
+    fn nextstate(&self) -> StateId {
+        self.nextstate
+    }
+}
+
+impl<W: Weight> StdArc<W> {
+    pub fn new(i: Label, o: Label, w: W, s: StateId) -> StdArc<W> {
+        StdArc { ilabel: i,
+                 olabel: o,
+                 weight: w,
+                 nextstate: s }
     }
 }
 
@@ -62,7 +85,7 @@ impl<W: Weight> Arc<W> {
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
 struct VecState<W: Weight> {
     finalweight: W,
-    arcs: Vec<Arc<W>>
+    arcs: Vec<StdArc<W>>
 }
 
 impl<W: Weight> VecState<W> {
@@ -82,7 +105,7 @@ pub struct VecFst<W: Weight> {
 }
 
 impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
-    type AI = VecArcIterator<'a, W>;
+    type I = VecArcIterator<'a, W>;
 
     fn get_start(&self) -> Option<StateId> {
         self.startstate
@@ -113,7 +136,7 @@ impl <'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W) {
         assert!(source < self.states.len());
         assert!(target < self.states.len());
-        self.states[source].arcs.push(Arc::new(ilabel, olabel, weight, target));
+        self.states[source].arcs.push(StdArc::new(ilabel, olabel, weight, target));
     }
 
     fn set_finalweight(&mut self, id: StateId, finalweight: W) {
@@ -147,9 +170,9 @@ pub struct VecArcIterator<'a, W: 'a + Weight> {
 }
 
 impl<'a, W: Weight> Iterator for VecArcIterator<'a, W> {
-    type Item = &'a Arc<W>;
+    type Item = &'a StdArc<W>;
 
-    fn next(&mut self) -> Option<&'a Arc<W>> {
+    fn next(&mut self) -> Option<&'a StdArc<W>> {
         self.arcindex =
             if self.arcindex.is_none() {
                 Some(0)
