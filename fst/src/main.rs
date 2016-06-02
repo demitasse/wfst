@@ -14,6 +14,7 @@ fn main() {
     println!("{:?}", a);
     println!("{:?}", b);
     println!("{:?}", c);
+    println!("");
 
     let mut aa = VecFst::<TropicalWeight<f32>>::new();
     let s0 = aa.add_state(TropicalWeight::new(Some(23.0)));
@@ -24,5 +25,24 @@ fn main() {
     aa.add_arc(s1, s2, 0, 0, TropicalWeight::new(Some(1.0)));
     aa.add_arc(s1, s2, 0, 0, TropicalWeight::new(Some(2.0)));
     println!("{:?}", aa);
-    println!("{:?}", aa.arc_iter(1))
+    println!("");
+    for arc in aa.arc_iter(1) {
+        //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `aa`
+        // AS IMMUTABLE:
+        //let s3 = aa.add_state(TropicalWeight::new(Some(23.0)));
+        //aa.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
+        println!("{:?}", arc);
+    }
+    println!("");
+
+    for arc in aa.arc_iter(1).cloned().collect::<Vec<_>>() {
+        // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
+        let s3 = aa.add_state(TropicalWeight::new(Some(23.0)));
+        aa.add_arc(s0, s3, 0, 0, TropicalWeight::new(Some(3.0)));
+
+        println!("{:?}", arc);
+    }
+    println!("");
+    println!("{:?}", aa);    
+
 }
