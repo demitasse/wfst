@@ -1,7 +1,7 @@
 extern crate semiring;
 extern crate fst;
 
-use semiring::TropicalWeight;
+use semiring::{TropicalWeight, Weight};
 use fst::{VecFst, StdArc, Arc, Fst, MutableFst, ExpandedFst};
 use fst::operations as fstops;
 
@@ -17,13 +17,13 @@ fn main() {
     println!("");
 
     let mut fst = VecFst::<TropicalWeight<f32>>::new();
-    let s0 = fst.add_state(TropicalWeight::new(Some(23.0)));
-    let s1 = fst.add_state(TropicalWeight::new(Some(24.0)));
-    let s2 = fst.add_state(TropicalWeight::new(Some(25.0)));
+    let s0 = fst.add_state(TropicalWeight::<f32>::zero());
+    let s1 = fst.add_state(TropicalWeight::<f32>::zero());
+    let s2 = fst.add_state(TropicalWeight::<f32>::one());
     fst.set_start(0);
-    fst.add_arc(s0, s1, 0, 0, TropicalWeight::new(Some(0.0)));
-    fst.add_arc(s1, s2, 0, 0, TropicalWeight::new(Some(1.0)));
-    fst.add_arc(s1, s2, 0, 0, TropicalWeight::new(Some(2.0)));
+    fst.add_arc(s0, s1, 0, 0, TropicalWeight::<f32>::zero());
+    fst.add_arc(s1, s2, 0, 0, TropicalWeight::<f32>::zero());
+    fst.add_arc(s1, s2, 0, 0, TropicalWeight::<f32>::zero());
     println!("{:?}", fst);
     println!("");
     for arc in fst.arc_iter(1) {
@@ -37,18 +37,25 @@ fn main() {
 
     for arc in fst.arc_iter(1).cloned().collect::<Vec<_>>() {
         // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
-        let ss = fst.add_state(TropicalWeight::new(Some(23.0)));
-        fst.add_arc(s0, ss, 0, 0, TropicalWeight::new(Some(3.0)));
+        let ss = fst.add_state(TropicalWeight::<f32>::one());
+        fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());
 
         println!("{:?}", arc);
     }
+    
+    println!("");
+    println!("{:?}", fst);
+    println!("");
+    println!("Number of states: {}", fst.get_numstates());    
+    fstops::extendfinal(&mut fst);
     println!("");
     println!("{:?}", fst);    
-    
+    println!("");
+    println!("Number of states: {}", fst.get_numstates());    
+    fstops::unextendfinal(&mut fst);
+    println!("");
+    println!("{:?}", fst);    
     println!("");
     println!("Number of states: {}", fst.get_numstates());    
 
-    //Not yet implemented!
-    let fst2: VecFst<TropicalWeight<f32>> = fstops::extendfinal(fst);
-    println!("{:?}", fst2);
 }

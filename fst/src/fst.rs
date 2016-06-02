@@ -26,6 +26,7 @@ pub trait Fst<'a, W: Weight> {
 pub trait MutableFst<'a, W: Weight>: Fst<'a, W> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
+    fn del_state(&mut self, StateId);
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W);
     fn set_finalweight(&mut self, id: StateId, finalweight: W);
 }
@@ -98,7 +99,7 @@ impl<W: Weight> VecState<W> {
 ////////// FST
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
 pub struct VecFst<W: Weight> {
-    states: Vec<VecState<W>>,   //we need to make sure that element indexes don't change once added
+    states: Vec<VecState<W>>,   //we need to make sure that element indexes are always consistent with arcs
     startstate: Option<usize>,
     isyms: Option<Vec<String>>,
     osyms: Option<Vec<String>>
@@ -131,6 +132,21 @@ impl <'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {
         let id = self.states.len();
         self.states.push(VecState::new(finalweight));
         id
+    }
+
+    fn del_state(&mut self, id: StateId) {
+        assert!(id != self.startstate.unwrap());
+        self.states.remove(id);
+        //update arcs in remaining states
+        for i in 0..self.states.len() {
+            for j in 0..self.states[i].arcs.len() {
+                if self.states[i].arcs[j].nextstate == id {
+                    self.states[i].arcs.remove(j);
+                } else if self.states[i].arcs[j].nextstate > id {
+                    self.states[i].arcs[j].nextstate -= 1;
+                }
+            }
+        }
     }
 
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W) {
