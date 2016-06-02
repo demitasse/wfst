@@ -3,7 +3,6 @@ extern crate rustc_serialize;
 extern crate semiring;
 use semiring::*;
 
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////// FST AND MUTABLE FST INTERFACES
 ////////////////////////////////////////////////////////////////////////////////
@@ -15,20 +14,25 @@ use semiring::*;
 pub type StateId = usize;
 
 pub trait Fst<'a, W: Weight> {
-    type I: Iterator;
-    fn start_state(&self) -> Option<StateId>;
-    fn final_weight(&self, StateId) -> W;       //Weight is Copy
-    fn arc_iter(&'a self, StateId) -> Self::I;
+    type AI: Iterator;
+    fn get_start(&self) -> Option<StateId>;
+    fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
+    fn arc_iter(&'a self, StateId) -> Self::AI;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
-// implementations?):
+// implementations):
 pub trait MutableFst<'a, W: Weight>: Fst<'a, W> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W);
-    //set_final? ...
+    fn set_finalweight(&mut self, id: StateId, finalweight: W);
 }
+
+pub trait ExpandedFst<'a, W: Weight>: Fst<'a, W> {
+    fn get_numstates(&self) -> usize;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////// FST IMPLEMENTATION 1: A Mutable FST using Vectors
@@ -57,15 +61,13 @@ impl<W: Weight> Arc<W> {
 ////////// STATE
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
 struct VecState<W: Weight> {
-    id: StateId,
     finalweight: W,
     arcs: Vec<Arc<W>>
 }
 
 impl<W: Weight> VecState<W> {
-    fn new(id: StateId, finalweight: W) -> VecState<W> {
-        VecState { id: id,
-                   finalweight: finalweight,
+    fn new(finalweight: W) -> VecState<W> {
+        VecState { finalweight: finalweight,
                    arcs: Vec::new() }
     }
 }
@@ -80,13 +82,13 @@ pub struct VecFst<W: Weight> {
 }
 
 impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
-    type I = VecArcIterator<'a, W>;
+    type AI = VecArcIterator<'a, W>;
 
-    fn start_state(&self) -> Option<StateId> {
+    fn get_start(&self) -> Option<StateId> {
         self.startstate
     }
 
-    fn final_weight(&self, id: StateId) -> W {
+    fn get_finalweight(&self, id: StateId) -> W {
         self.states[id].finalweight
     }
 
@@ -97,7 +99,6 @@ impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
 }
 
 impl <'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {  
-
     fn set_start(&mut self, id: StateId) {
         assert!(id < self.states.len());
         self.startstate = Some(id);
@@ -105,7 +106,7 @@ impl <'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {
 
     fn add_state(&mut self, finalweight: W) -> StateId {
         let id = self.states.len();
-        self.states.push(VecState::new(id, finalweight));
+        self.states.push(VecState::new(finalweight));
         id
     }
 
@@ -114,9 +115,21 @@ impl <'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {
         assert!(target < self.states.len());
         self.states[source].arcs.push(Arc::new(ilabel, olabel, weight, target));
     }
+
+    fn set_finalweight(&mut self, id: StateId, finalweight: W) {
+        assert!(id < self.states.len());
+        self.states[id].finalweight = finalweight;
+    }
 }
 
-impl<W: Weight> VecFst<W> {
+impl <'a, W: 'a + Weight> ExpandedFst<'a, W> for VecFst<W> {  
+    fn get_numstates(&self) -> usize {
+        self.states.len()
+    }
+}
+
+
+impl <W: Weight> VecFst<W> {
     pub fn new() -> VecFst<W> {
         VecFst { states: Vec::new(),
                  startstate: None,
