@@ -4,7 +4,7 @@
 use std::vec::Vec;
 
 use semiring::Weight;
-use {ExpandedFst, MutableFst, StateId, Arc};
+use {ExpandedFst, MutableFst, StateId};
 
 pub fn extendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &mut T) {
     //Collect current final states
@@ -34,14 +34,14 @@ pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (
         }
     }
     
-    //Transfer finalweight from final arcs to new final states
-    for i in 0..fst.get_numstates() {
-        for arc in fst.arc_iter(i).collect::<Vec<Arc<W>>>() {
-            if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
-                fst.set_finalweight(i, arc.weight());
-            }
-        }
-    }
+    // //Transfer finalweight from final arcs to new final states
+    // for i in 0..fst.get_numstates() {
+    //     for arc in fst.arc_iter(i).collect::<Vec<Arc<W>>>() {
+    //         if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
+    //             fst.set_finalweight(i, arc.weight());
+    //         }
+    //     }
+    // }
     fst.del_state(finalstate);
     
 }

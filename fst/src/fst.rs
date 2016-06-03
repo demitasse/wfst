@@ -15,10 +15,10 @@ pub type Label = usize;
 pub type StateId = usize;
 
 pub trait Fst<'a, W: Weight> {
-    type I: Iterator;
+    type Iter: Iterator;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
-    fn arc_iter(&'a self, StateId) -> Self::I;
+    fn arc_iter(&'a self, StateId) -> Self::Iter;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
@@ -106,7 +106,7 @@ pub struct VecFst<W: Weight> {
 }
 
 impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
-    type I = VecArcIterator<'a, W>;
+    type Iter = VecArcIterator<'a, W>;
 
     fn get_start(&self) -> Option<StateId> {
         self.startstate
