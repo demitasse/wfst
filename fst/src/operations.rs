@@ -36,7 +36,7 @@ pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (
     
     // //Transfer finalweight from final arcs to new final states
     // for i in 0..fst.get_numstates() {
-    //     for arc in fst.arc_iter(i).collect::<Vec<Arc<W>>>() {
+    //     for arc in fst.arc_iter(i).cloned().collect::<Vec<U>>() {
     //         if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
     //             fst.set_finalweight(i, arc.weight());
     //         }

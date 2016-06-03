@@ -15,7 +15,7 @@ pub type Label = usize;
 pub type StateId = usize;
 
 pub trait Fst<'a, W: Weight> {
-    type Iter: Iterator;
+    type Iter: ArcIterator<W>;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
     fn arc_iter(&'a self, StateId) -> Self::Iter;
@@ -42,6 +42,10 @@ pub trait Arc<W: Weight> {
     fn nextstate(&self) -> StateId;
 }
 
+pub trait ArcIterator<W: Weight>: Iterator {
+    type Item: Arc<W>;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////// FST IMPLEMENTATION 1: A Mutable FST using Vectors
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +60,24 @@ pub struct StdArc<W: Weight> {
 }
 
 impl<W: Weight> Arc<W> for StdArc<W> {
+    fn ilabel(&self) -> Label {
+        self.ilabel
+    }
+
+    fn olabel(&self) -> Label {
+        self.olabel
+    }
+
+    fn weight(&self) -> W {
+        self.weight
+    }
+
+    fn nextstate(&self) -> StateId {
+        self.nextstate
+    }
+}
+
+impl<'a, W: Weight> Arc<W> for &'a StdArc<W> {
     fn ilabel(&self) -> Label {
         self.ilabel
     }
@@ -201,6 +223,10 @@ impl<'a, W: Weight> Iterator for VecArcIterator<'a, W> {
             None
         }
     }
+}
+
+impl<'a, W: Weight> ArcIterator<W> for VecArcIterator<'a, W> {
+    type Item = &'a StdArc<W>;    
 }
 
 ////////////////////////////////////////////////////////////////////////////////
