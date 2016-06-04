@@ -6,7 +6,7 @@ use std::vec::Vec;
 use semiring::Weight;
 use {ExpandedFst, MutableFst, StateId};
 
-pub fn extendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &mut T) {
+pub fn extendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &'a mut T) {
     //Collect current final states
     let mut finalstates: Vec<StateId> = Vec::new();
     for i in 0..fst.get_numstates() {
@@ -24,7 +24,7 @@ pub fn extendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fs
     }
 }
 
-pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &mut T) {
+pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &'a mut T) {
     //Find final state (assuming only one exists)
     let mut finalstate = 0;
     for i in 0..fst.get_numstates() {
@@ -34,9 +34,13 @@ pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (
         }
     }
     
+    for arc in fst.arc_iter(0) {
+        println!("{:?}", arc.clone());
+    }
+
     // //Transfer finalweight from final arcs to new final states
     // for i in 0..fst.get_numstates() {
-    //     for arc in fst.arc_iter(i).cloned().collect::<Vec<U>>() {
+    //     for arc in fst.arc_iter(i).cloned().collect::<Vec<_>>() {
     //         if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
     //             fst.set_finalweight(i, arc.weight());
     //         }

@@ -1,5 +1,7 @@
 extern crate rustc_serialize;
 
+use std::fmt::Debug;
+
 extern crate semiring;
 use semiring::*;
 
@@ -14,8 +16,9 @@ use semiring::*;
 pub type Label = usize;
 pub type StateId = usize;
 
-pub trait Fst<'a, W: Weight> {
-    type Iter: ArcIterator<W>;
+pub trait Fst<'a, W: Weight>: Debug {
+    type Arc: Arc<'a, W> + Debug;
+    type Iter: Iterator<Item=Self::Arc>;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
     fn arc_iter(&'a self, StateId) -> Self::Iter;
@@ -35,16 +38,13 @@ pub trait ExpandedFst<'a, W: Weight>: Fst<'a, W> {
     fn get_numstates(&self) -> usize;
 }
 
-pub trait Arc<W: Weight> {
+pub trait Arc<'a, W: Weight>: Clone {
     fn ilabel(&self) -> Label;
     fn olabel(&self) -> Label;
     fn weight(&self) -> W;
     fn nextstate(&self) -> StateId;
 }
 
-pub trait ArcIterator<W: Weight>: Iterator {
-    type Item: Arc<W>;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////// FST IMPLEMENTATION 1: A Mutable FST using Vectors
@@ -59,7 +59,7 @@ pub struct StdArc<W: Weight> {
     nextstate: StateId,
 }
 
-impl<W: Weight> Arc<W> for StdArc<W> {
+impl<'a, W: Weight> Arc<'a, W> for StdArc<W> {
     fn ilabel(&self) -> Label {
         self.ilabel
     }
@@ -77,7 +77,7 @@ impl<W: Weight> Arc<W> for StdArc<W> {
     }
 }
 
-impl<'a, W: Weight> Arc<W> for &'a StdArc<W> {
+impl<'a, W: Weight> Arc<'a, W> for &'a StdArc<W> {
     fn ilabel(&self) -> Label {
         self.ilabel
     }
@@ -128,7 +128,8 @@ pub struct VecFst<W: Weight> {
 }
 
 impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
-    type Iter = VecArcIterator<'a, W>;
+    type Arc = &'a StdArc<W>;
+    type Iter = VecArcIter<'a, W>;
 
     fn get_start(&self) -> Option<StateId> {
         self.startstate
@@ -138,9 +139,9 @@ impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
         self.states[id].finalweight
     }
 
-    fn arc_iter(&'a self, id: StateId) -> VecArcIterator<'a, W> {
-        VecArcIterator { state: &self.states[id],
-                         arcindex: None }
+    fn arc_iter(&'a self, id: StateId) -> Self::Iter {
+        VecArcIter { state: &self.states[id],
+                     arcindex: None }
     }
 }
 
@@ -202,15 +203,15 @@ impl <W: Weight> VecFst<W> {
 
 ////////// ARCITERATOR
 #[derive(Debug)]
-pub struct VecArcIterator<'a, W: 'a + Weight> {
+pub struct VecArcIter<'a, W: 'a + Weight> {
     state: &'a VecState<W>,
-    arcindex: Option<usize>
+    arcindex: Option<usize>,
 }
 
-impl<'a, W: Weight> Iterator for VecArcIterator<'a, W> {
+impl<'a, W: Weight> Iterator for VecArcIter<'a, W> {
     type Item = &'a StdArc<W>;
-
-    fn next(&mut self) -> Option<&'a StdArc<W>> {
+    
+    fn next(&mut self) -> Option<Self::Item> {
         self.arcindex =
             if self.arcindex.is_none() {
                 Some(0)
@@ -222,11 +223,8 @@ impl<'a, W: Weight> Iterator for VecArcIterator<'a, W> {
         } else {
             None
         }
-    }
-}
 
-impl<'a, W: Weight> ArcIterator<W> for VecArcIterator<'a, W> {
-    type Item = &'a StdArc<W>;    
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

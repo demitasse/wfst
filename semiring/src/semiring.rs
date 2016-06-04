@@ -1,5 +1,6 @@
 extern crate rustc_serialize;
 
+use std::fmt::Debug;
 use std::ops::{Add, Sub};
 use std::{f64, f32};
 use std::option::Option;
@@ -12,7 +13,7 @@ use std::option::Option;
 const DEFAULT_DELTA: f32 = 1.0 / 1024.0;
 
 // Internal float trait for our implementations over either f32 or f64
-pub trait Float<T>: Copy + PartialOrd + Add<Output=T> + Sub<Output=T> {
+pub trait Float<T>: Debug + Copy + PartialOrd + Add<Output=T> + Sub<Output=T> {
     fn zero() -> T;
     fn one() -> T;
     fn nan() -> T;
@@ -152,7 +153,7 @@ pub const IDEMPOTENT: u64 = 0x08; // FORALL a: Plus(a, a) = a
 pub const PATH: u64 = 0x10; // FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
 
 // Define Weight (demit: may want to rethink having this `Copy`)
-pub trait Weight: Copy {
+pub trait Weight: Copy + Debug {
     fn is_member(&self) -> bool;
     fn plus(self, rhs: Self) -> Self;
     fn times(self, rhs: Self) -> Self;
