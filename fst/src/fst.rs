@@ -17,7 +17,7 @@ pub type Label = usize;
 pub type StateId = usize;
 
 pub trait Fst<'a, W: Weight>: Debug {
-    type Arc: 'a + Arc<'a, W> + Debug;
+    type Arc: 'a + Arc<W> + Debug;
     type Iter: Iterator<Item=&'a Self::Arc> + Debug;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
@@ -38,7 +38,7 @@ pub trait ExpandedFst<'a, W: Weight>: Fst<'a, W> {
     fn get_numstates(&self) -> usize;
 }
 
-pub trait Arc<'a, W: Weight>: Clone {
+pub trait Arc<W: Weight>: Clone {
     fn ilabel(&self) -> Label;
     fn olabel(&self) -> Label;
     fn weight(&self) -> W;
@@ -59,7 +59,7 @@ pub struct StdArc<W: Weight> {
     nextstate: StateId,
 }
 
-impl<'a, W: Weight> Arc<'a, W> for StdArc<W> {
+impl<'a, W: Weight> Arc<W> for StdArc<W> {
     fn ilabel(&self) -> Label {
         self.ilabel
     }
@@ -77,7 +77,7 @@ impl<'a, W: Weight> Arc<'a, W> for StdArc<W> {
     }
 }
 
-// impl<'a, W: Weight> Arc<'a, W> for &'a StdArc<W> {
+// impl<'a, W: Weight> Arc<xW> for &'a StdArc<W> {
 //     fn ilabel(&self) -> Label {
 //         self.ilabel
 //     }
