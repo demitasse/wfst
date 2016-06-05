@@ -31,17 +31,21 @@ fn main() {
         // AS IMMUTABLE:
         //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
         //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
+        
+        //let a: i32 = arc; //DEMIT: typecheck
         println!("{:?}", arc);
     }
     println!("");
 
-    for arc in fst.arc_iter(1).cloned().collect::<Vec<_>>() {
-        // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
-        let ss = fst.add_state(TropicalWeight::<f32>::one());
-        fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());
+    // for arc in fst.arc_iter(1).cloned().collect::<Vec<_>>() {
+    //     // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
 
-        println!("{:?}", arc);
-    }
+    //     //let a: i32 = arc.clone(); //DEMIT: typecheck
+    //     let ss = fst.add_state(TropicalWeight::<f32>::one());
+    //     fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());
+
+    //     println!("{:?}", arc);
+    // }
     
     println!("");
     println!("{:?}", fst);

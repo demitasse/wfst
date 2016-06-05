@@ -34,9 +34,16 @@ pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (
         }
     }
     
-    for arc in fst.arc_iter(0) {
-        println!("{:?}", arc.clone().nextstate());
+
+    {
+        let arciter = &fst.arc_iter(0);
     }
+    
+    // for arc in fst.arc_iter(0) {
+    //     //let a: i32 = arc.clone(); //DEMIT: typecheck
+        
+    //     println!("{:?}", arc.clone().nextstate());
+    // }
 
     // for arc in fst.arc_iter(0).cloned().collect::<Vec<_>>() {
     //     println!("{:?}", arc);
@@ -50,6 +57,6 @@ pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (
     //         }
     //     }
     // }
-    //fst.del_state(finalstate);
+    fst.del_state(finalstate);
     
 }
