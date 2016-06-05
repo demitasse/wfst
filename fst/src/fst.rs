@@ -17,8 +17,8 @@ pub type Label = usize;
 pub type StateId = usize;
 
 pub trait Fst<'a, W: Weight>: Debug {
-    type Arc: Arc<'a, W> + Debug;
-    type Iter: Iterator<Item=Self::Arc>;
+    type Arc: 'a + Arc<'a, W> + Debug;
+    type Iter: Iterator<Item=&'a Self::Arc> + Debug;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
     fn arc_iter(&'a self, StateId) -> Self::Iter;
@@ -77,23 +77,23 @@ impl<'a, W: Weight> Arc<'a, W> for StdArc<W> {
     }
 }
 
-impl<'a, W: Weight> Arc<'a, W> for &'a StdArc<W> {
-    fn ilabel(&self) -> Label {
-        self.ilabel
-    }
+// impl<'a, W: Weight> Arc<'a, W> for &'a StdArc<W> {
+//     fn ilabel(&self) -> Label {
+//         self.ilabel
+//     }
 
-    fn olabel(&self) -> Label {
-        self.olabel
-    }
+//     fn olabel(&self) -> Label {
+//         self.olabel
+//     }
 
-    fn weight(&self) -> W {
-        self.weight
-    }
+//     fn weight(&self) -> W {
+//         self.weight
+//     }
 
-    fn nextstate(&self) -> StateId {
-        self.nextstate
-    }
-}
+//     fn nextstate(&self) -> StateId {
+//         self.nextstate
+//     }
+// }
 
 impl<W: Weight> StdArc<W> {
     pub fn new(i: Label, o: Label, w: W, s: StateId) -> StdArc<W> {
@@ -128,7 +128,7 @@ pub struct VecFst<W: Weight> {
 }
 
 impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
-    type Arc = &'a StdArc<W>;
+    type Arc = StdArc<W>;
     type Iter = VecArcIter<'a, W>;
 
     fn get_start(&self) -> Option<StateId> {
