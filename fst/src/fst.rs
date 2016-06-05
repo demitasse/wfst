@@ -59,7 +59,7 @@ pub struct StdArc<W: Weight> {
     nextstate: StateId,
 }
 
-impl<'a, W: Weight> Arc<W> for StdArc<W> {
+impl<W: Weight> Arc<W> for StdArc<W> {
     fn ilabel(&self) -> Label {
         self.ilabel
     }
@@ -76,7 +76,6 @@ impl<'a, W: Weight> Arc<W> for StdArc<W> {
         self.nextstate
     }
 }
-
 
 impl<W: Weight> StdArc<W> {
     pub fn new(i: Label, o: Label, w: W, s: StateId) -> StdArc<W> {
