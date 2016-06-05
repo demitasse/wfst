@@ -77,23 +77,6 @@ impl<'a, W: Weight> Arc<W> for StdArc<W> {
     }
 }
 
-// impl<'a, W: Weight> Arc<xW> for &'a StdArc<W> {
-//     fn ilabel(&self) -> Label {
-//         self.ilabel
-//     }
-
-//     fn olabel(&self) -> Label {
-//         self.olabel
-//     }
-
-//     fn weight(&self) -> W {
-//         self.weight
-//     }
-
-//     fn nextstate(&self) -> StateId {
-//         self.nextstate
-//     }
-// }
 
 impl<W: Weight> StdArc<W> {
     pub fn new(i: Label, o: Label, w: W, s: StateId) -> StdArc<W> {
