@@ -2,7 +2,7 @@ extern crate semiring;
 extern crate fst;
 
 use semiring::{TropicalWeight, Weight};
-use fst::{VecFst, StdArc, Arc, Fst, MutableFst, ExpandedFst};
+use fst::{VecFst, StdArc, Arc, MutableFst, ExpandedFst};
 use fst::operations as fstops;
 
 fn main() {
@@ -26,16 +26,16 @@ fn main() {
     fst.add_arc(s1, s2, 0, 0, TropicalWeight::<f32>::zero());
     println!("{:?}", fst);
     println!("");
-    for arc in fst.arc_iter(1) {
-        //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
-        // AS IMMUTABLE:
-        //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
-        //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
+    // for arc in fst.arc_iter(1) {
+    //     //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
+    //     // AS IMMUTABLE:
+    //     //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
+    //     //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
         
-        //let a: i32 = arc; //DEMIT: typecheck
-        println!("{:?}", arc);
-    }
-    println!("");
+    //     //let a: i32 = arc; //DEMIT: typecheck
+    //     println!("{:?}", arc);
+    // }
+    // println!("");
 
     // for arc in fst.arc_iter(1).cloned().collect::<Vec<_>>() {
     //     // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:

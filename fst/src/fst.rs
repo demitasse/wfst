@@ -16,17 +16,15 @@ use semiring::*;
 pub type Label = usize;
 pub type StateId = usize;
 
-pub trait Fst<'a, W: Weight>: Debug {
-    type Arc: 'a + Arc<W> + Debug;
-    type Iter: Iterator<Item=&'a Self::Arc> + Debug;
+pub trait Fst<W: Weight>: Debug {
+    type State: State<W> + Debug;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
-    fn arc_iter(&'a self, StateId) -> Self::Iter;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
 // implementations):
-pub trait MutableFst<'a, W: Weight>: Fst<'a, W> {
+pub trait MutableFst<W: Weight>: Fst<W> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
     fn del_state(&mut self, StateId);
@@ -34,7 +32,7 @@ pub trait MutableFst<'a, W: Weight>: Fst<'a, W> {
     fn set_finalweight(&mut self, id: StateId, finalweight: W);
 }
 
-pub trait ExpandedFst<'a, W: Weight>: Fst<'a, W> {
+pub trait ExpandedFst<W: Weight>: Fst<W> {
     fn get_numstates(&self) -> usize;
 }
 
@@ -45,6 +43,9 @@ pub trait Arc<W: Weight>: Clone {
     fn nextstate(&self) -> StateId;
 }
 
+pub trait State<W: Weight> {  //: IntoIterator {
+    type Arc: Arc<W> + Debug;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////// FST IMPLEMENTATION 1: A Mutable FST using Vectors
@@ -88,7 +89,7 @@ impl<W: Weight> StdArc<W> {
 
 ////////// STATE
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
-struct VecState<W: Weight> {
+pub struct VecState<W: Weight> {
     finalweight: W,
     arcs: Vec<StdArc<W>>
 }
@@ -100,6 +101,10 @@ impl<W: Weight> VecState<W> {
     }
 }
 
+impl<W: Weight> State<W> for VecState<W> {
+    type Arc = StdArc<W>;
+}
+
 ////////// FST
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
 pub struct VecFst<W: Weight> {
@@ -109,9 +114,8 @@ pub struct VecFst<W: Weight> {
     osyms: Option<Vec<String>>
 }
 
-impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
-    type Arc = StdArc<W>;
-    type Iter = VecArcIter<'a, W>;
+impl <W: Weight> Fst<W> for VecFst<W> {
+    type State = VecState<W>;
 
     fn get_start(&self) -> Option<StateId> {
         self.startstate
@@ -120,14 +124,9 @@ impl <'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
     fn get_finalweight(&self, id: StateId) -> W {
         self.states[id].finalweight
     }
-
-    fn arc_iter(&'a self, id: StateId) -> Self::Iter {
-        VecArcIter { state: &self.states[id],
-                     arcindex: None }
-    }
 }
 
-impl <'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {  
+impl <W: Weight> MutableFst<W> for VecFst<W> {  
     fn set_start(&mut self, id: StateId) {
         assert!(id < self.states.len());
         self.startstate = Some(id);
@@ -166,7 +165,7 @@ impl <'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {
     }
 }
 
-impl <'a, W: 'a + Weight> ExpandedFst<'a, W> for VecFst<W> {  
+impl <W: Weight> ExpandedFst<W> for VecFst<W> {  
     fn get_numstates(&self) -> usize {
         self.states.len()
     }
@@ -183,31 +182,9 @@ impl <W: Weight> VecFst<W> {
     }
 }
 
-////////// ARCITERATOR
-#[derive(Debug)]
-pub struct VecArcIter<'a, W: 'a + Weight> {
-    state: &'a VecState<W>,
-    arcindex: Option<usize>,
-}
+////////// DEMIT: Implement IntoIterator on State?
 
-impl<'a, W: Weight> Iterator for VecArcIter<'a, W> {
-    type Item = &'a StdArc<W>;
-    
-    fn next(&mut self) -> Option<Self::Item> {
-        self.arcindex =
-            if self.arcindex.is_none() {
-                Some(0)
-            } else {
-                Some(self.arcindex.unwrap() + 1)
-            };
-        if self.arcindex.unwrap() < self.state.arcs.len() {
-            Some(&self.state.arcs[self.arcindex.unwrap()])
-        } else {
-            None
-        }
 
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////// MODULES

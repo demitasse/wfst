@@ -4,9 +4,9 @@
 use std::vec::Vec;
 
 use semiring::Weight;
-use {ExpandedFst, MutableFst, StateId, Arc};
+use {ExpandedFst, MutableFst, StateId};
 
-pub fn extendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &'a mut T) {
+pub fn extendfinal<W: Weight, T: ExpandedFst<W> + MutableFst<W>> (fst: &mut T) {
     //Collect current final states
     let mut finalstates: Vec<StateId> = Vec::new();
     for i in 0..fst.get_numstates() {
@@ -24,7 +24,7 @@ pub fn extendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fs
     }
 }
 
-pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &'a mut T) {
+pub fn unextendfinal<W: Weight, T: ExpandedFst<W> + MutableFst<W>> (fst: &mut T) {
     //Find final state (assuming only one exists)
     let mut finalstate = 0;
     for i in 0..fst.get_numstates() {
@@ -35,9 +35,9 @@ pub fn unextendfinal<'a, W: Weight, T: ExpandedFst<'a, W> + MutableFst<'a, W>> (
     }
     
 
-    {
-        let arciter = &fst.arc_iter(0);
-    }
+    // {
+    //     let arciter = &fst.arc_iter(0);
+    // }
     
     // for arc in fst.arc_iter(0) {
     //     //let a: i32 = arc.clone(); //DEMIT: typecheck
