@@ -1,6 +1,8 @@
 extern crate rustc_serialize;
 
 use std::fmt::Debug;
+use std::vec;
+use std::slice;
 
 extern crate semiring;
 use semiring::*;
@@ -44,7 +46,7 @@ pub trait Arc<W: Weight>: Clone {
     fn nextstate(&self) -> StateId;
 }
 
-pub trait State<W: Weight> { //: IntoIterator {
+pub trait State<W: Weight>: IntoIterator {
     type Arc: Arc<W> + Debug;
 }
 
@@ -126,7 +128,7 @@ impl<W: Weight> Fst<W> for VecFst<W> {
         self.states[id].finalweight
     }
 
-    fn state(&self, id: StateId) -> Option<&VecState<W>> {
+    fn state(&self, id: StateId) -> Option<&Self::State> {
         self.states.get(id)
     }
 }
@@ -188,13 +190,22 @@ impl<W: Weight> VecFst<W> {
 }
 
 ////////// DEMIT: Implement IntoIterator on State?
-// impl<W: Weight> IntoIterator for VecState<W> {
-//     type Item = StdArc<W>;
-//     type IntoIter = DEMIT;
-//     fn into_iter(self) -> DEMIT {
-//         unimplemented!();
-//     }
-// }
+impl<W: Weight> IntoIterator for VecState<W> {
+    type Item = <VecState<W> as State<W>>::Arc;
+    type IntoIter = vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.arcs.into_iter()
+    }
+}
+
+impl<'a, W: Weight> IntoIterator for &'a VecState<W> {
+    type Item = &'a <VecState<W> as State<W>>::Arc;
+    type IntoIter = slice::Iter<'a, <VecState<W> as State<W>>::Arc>;
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.arcs).into_iter()
+    }
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
