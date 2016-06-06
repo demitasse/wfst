@@ -34,6 +34,11 @@ pub fn unextendfinal<W: Weight, T: ExpandedFst<W> + MutableFst<W>> (fst: &mut T)
         }
     }
     
+    {
+        let borrowed_state = fst.state(0);
+        println!("{:?}", borrowed_state);
+        println!("");
+    }
 
     // {
     //     let arciter = &fst.arc_iter(0);

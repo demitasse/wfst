@@ -2,7 +2,7 @@ extern crate semiring;
 extern crate fst;
 
 use semiring::{TropicalWeight, Weight};
-use fst::{VecFst, StdArc, Arc, MutableFst, ExpandedFst};
+use fst::{VecFst, StdArc, Fst, Arc, MutableFst, ExpandedFst};
 use fst::operations as fstops;
 
 fn main() {
@@ -26,6 +26,13 @@ fn main() {
     fst.add_arc(s1, s2, 0, 0, TropicalWeight::<f32>::zero());
     println!("{:?}", fst);
     println!("");
+    
+    {
+        let borrowed_state = fst.state(0);
+        println!("{:?}", borrowed_state);
+        println!("");
+    }
+
     // for arc in fst.arc_iter(1) {
     //     //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
     //     // AS IMMUTABLE:

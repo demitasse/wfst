@@ -20,6 +20,7 @@ pub trait Fst<W: Weight>: Debug {
     type State: State<W> + Debug;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
+    fn state(&self, StateId) -> Option<&Self::State>;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
@@ -43,7 +44,7 @@ pub trait Arc<W: Weight>: Clone {
     fn nextstate(&self) -> StateId;
 }
 
-pub trait State<W: Weight> {  //: IntoIterator {
+pub trait State<W: Weight> { //: IntoIterator {
     type Arc: Arc<W> + Debug;
 }
 
@@ -114,7 +115,7 @@ pub struct VecFst<W: Weight> {
     osyms: Option<Vec<String>>
 }
 
-impl <W: Weight> Fst<W> for VecFst<W> {
+impl<W: Weight> Fst<W> for VecFst<W> {
     type State = VecState<W>;
 
     fn get_start(&self) -> Option<StateId> {
@@ -124,9 +125,13 @@ impl <W: Weight> Fst<W> for VecFst<W> {
     fn get_finalweight(&self, id: StateId) -> W {
         self.states[id].finalweight
     }
+
+    fn state(&self, id: StateId) -> Option<&VecState<W>> {
+        self.states.get(id)
+    }
 }
 
-impl <W: Weight> MutableFst<W> for VecFst<W> {  
+impl<W: Weight> MutableFst<W> for VecFst<W> {  
     fn set_start(&mut self, id: StateId) {
         assert!(id < self.states.len());
         self.startstate = Some(id);
@@ -165,14 +170,14 @@ impl <W: Weight> MutableFst<W> for VecFst<W> {
     }
 }
 
-impl <W: Weight> ExpandedFst<W> for VecFst<W> {  
+impl<W: Weight> ExpandedFst<W> for VecFst<W> {  
     fn get_numstates(&self) -> usize {
         self.states.len()
     }
 }
 
 
-impl <W: Weight> VecFst<W> {
+impl<W: Weight> VecFst<W> {
     pub fn new() -> VecFst<W> {
         VecFst { states: Vec::new(),
                  startstate: None,
@@ -183,7 +188,13 @@ impl <W: Weight> VecFst<W> {
 }
 
 ////////// DEMIT: Implement IntoIterator on State?
-
+// impl<W: Weight> IntoIterator for VecState<W> {
+//     type Item = StdArc<W>;
+//     type IntoIter = DEMIT;
+//     fn into_iter(self) -> DEMIT {
+//         unimplemented!();
+//     }
+// }
 
 
 ////////////////////////////////////////////////////////////////////////////////
