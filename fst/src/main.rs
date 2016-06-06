@@ -2,8 +2,8 @@ extern crate semiring;
 extern crate fst;
 
 use semiring::{TropicalWeight, Weight};
-use fst::{StdFst, StdArc, Arc, Fst, State, MutableFst};
-//use fst::operations as fstops;
+use fst::{StdFst, StdArc, Arc, Fst, State, MutableFst, ExpandedFst};
+use fst::operations as fstops;
 
 fn main() {
 
@@ -56,19 +56,19 @@ fn main() {
     //     println!("{:?}", arc);
     // }
     
-    // println!("");
-    // println!("{:?}", fst);
-    // println!("");
-    // println!("Number of states: {}", fst.get_numstates());    
-    // fstops::extendfinal(&mut fst);
-    // println!("");
-    // println!("{:?}", fst);    
-    // println!("");
-    // println!("Number of states: {}", fst.get_numstates());    
-    // fstops::unextendfinal(&mut fst);
-    // println!("");
-    // println!("{:?}", fst);    
-    // println!("");
-    // println!("Number of states: {}", fst.get_numstates());    
+    println!("");
+    println!("{:?}", fst);
+    println!("");
+    println!("Number of states: {}", fst.get_numstates());    
+    fstops::extendfinal(&mut fst);
+    println!("");
+    println!("{:?}", fst);    
+    println!("");
+    println!("Number of states: {}", fst.get_numstates());    
+    fstops::unextendfinal(&mut fst);
+    println!("");
+    println!("{:?}", fst);    
+    println!("");
+    println!("Number of states: {}", fst.get_numstates());    
 
 }
