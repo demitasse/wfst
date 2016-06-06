@@ -2,8 +2,8 @@ extern crate semiring;
 extern crate fst;
 
 use semiring::{TropicalWeight, Weight};
-use fst::{VecFst, StdArc, Fst, Arc, MutableFst, ExpandedFst};
-use fst::operations as fstops;
+use fst::{StdFst, StdArc, Arc, Fst, State, MutableFst};
+//use fst::operations as fstops;
 
 fn main() {
 
@@ -16,7 +16,7 @@ fn main() {
     println!("Nextstate: {:?}", c.nextstate());
     println!("");
 
-    let mut fst = VecFst::<TropicalWeight<f32>>::new();
+    let mut fst = StdFst::new();
     let s0 = fst.add_state(TropicalWeight::<f32>::zero());
     let s1 = fst.add_state(TropicalWeight::<f32>::zero());
     let s2 = fst.add_state(TropicalWeight::<f32>::one());
@@ -28,48 +28,47 @@ fn main() {
     println!("");
     
     {
-        let borrowed_state = fst.state(1);
-        println!("{:?}", borrowed_state);
-        for a in borrowed_state.unwrap().clone() {
-            println!("\t{:?}", a);
-        }
+        let borrowed_state = fst.state(1).unwrap();
+        println!("{:?}", borrowed_state.get_finalweight());
         println!("");
     }
+    println!("{:?}", fst.get_finalweight(1));
+    println!("");
 
-    for arc in fst.state(1) {
-        //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
-        // AS IMMUTABLE:
-        //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
-        //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
+    // for arc in fst.state(1) {
+    //     //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
+    //     // AS IMMUTABLE:
+    //     //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
+    //     //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
         
-        //let a: i32 = arc; //DEMIT: typecheck
-        println!("{:?}", arc);
-    }
-    println!("");
+    //     //let a: i32 = arc; //DEMIT: typecheck
+    //     println!("{:?}", arc);
+    // }
+    // println!("");
 
-    for arc in fst.state(1).into_iter().cloned().collect::<Vec<_>>() {
-        // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
+    // for arc in fst.state(1).into_iter().cloned().collect::<Vec<_>>() {
+    //     // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
 
-        //let a: i32 = arc.clone(); //DEMIT: typecheck
-        let ss = fst.add_state(TropicalWeight::<f32>::one());
-        fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());
+    //     //let a: i32 = arc.clone(); //DEMIT: typecheck
+    //     let ss = fst.add_state(TropicalWeight::<f32>::one());
+    //     fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());
 
-        println!("{:?}", arc);
-    }
+    //     println!("{:?}", arc);
+    // }
     
-    println!("");
-    println!("{:?}", fst);
-    println!("");
-    println!("Number of states: {}", fst.get_numstates());    
-    fstops::extendfinal(&mut fst);
-    println!("");
-    println!("{:?}", fst);    
-    println!("");
-    println!("Number of states: {}", fst.get_numstates());    
-    fstops::unextendfinal(&mut fst);
-    println!("");
-    println!("{:?}", fst);    
-    println!("");
-    println!("Number of states: {}", fst.get_numstates());    
+    // println!("");
+    // println!("{:?}", fst);
+    // println!("");
+    // println!("Number of states: {}", fst.get_numstates());    
+    // fstops::extendfinal(&mut fst);
+    // println!("");
+    // println!("{:?}", fst);    
+    // println!("");
+    // println!("Number of states: {}", fst.get_numstates());    
+    // fstops::unextendfinal(&mut fst);
+    // println!("");
+    // println!("{:?}", fst);    
+    // println!("");
+    // println!("Number of states: {}", fst.get_numstates());    
 
 }

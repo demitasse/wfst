@@ -1,8 +1,9 @@
 extern crate rustc_serialize;
 
 use std::fmt::Debug;
-use std::vec;
-use std::slice;
+use std::marker::PhantomData;
+//use std::vec;
+//use std::slice;
 
 extern crate semiring;
 use semiring::*;
@@ -18,36 +19,39 @@ use semiring::*;
 pub type Label = usize;
 pub type StateId = usize;
 
-pub trait Fst<W: Weight>: Debug {
-    type State: State<W> + Debug;
+pub trait Fst<W: Weight, A: Arc<W>, S: State<W, A>>: Debug {
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
-    fn state(&self, StateId) -> Option<&Self::State>;
+    fn state(&self, StateId) -> Option<&S>;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
 // implementations):
-pub trait MutableFst<W: Weight>: Fst<W> {
+pub trait MutableFst<W: Weight, A: Arc<W>, S: State<W, A>>: Fst<W, A, S> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
-    fn del_state(&mut self, StateId);
+//    fn del_state(&mut self, StateId);
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W);
     fn set_finalweight(&mut self, id: StateId, finalweight: W);
 }
 
-pub trait ExpandedFst<W: Weight>: Fst<W> {
+pub trait ExpandedFst<W: Weight, A: Arc<W>, S: State<W, A>>: Fst<W, A, S> {
     fn get_numstates(&self) -> usize;
 }
 
-pub trait Arc<W: Weight>: Clone {
+pub trait State<W: Weight, A: Arc<W>>: Debug { //: IntoIterator;
+    fn new(W) -> Self;
+    fn get_finalweight(&self) -> W;       //Weight is Copy
+    fn set_finalweight(&mut self, finalweight: W);
+    fn add_arc(&mut self, ilabel: Label, olabel: Label, weight: W, target: StateId); //DEMIT: Should be MutableState
+} 
+
+pub trait Arc<W: Weight>: Debug {
+    fn new(i: Label, o: Label, w: W, s: StateId) -> Self;
     fn ilabel(&self) -> Label;
     fn olabel(&self) -> Label;
     fn weight(&self) -> W;
     fn nextstate(&self) -> StateId;
-}
-
-pub trait State<W: Weight>: IntoIterator {
-    type Arc: Arc<W> + Debug;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,6 +68,10 @@ pub struct StdArc<W: Weight> {
 }
 
 impl<W: Weight> Arc<W> for StdArc<W> {
+    fn new(i: Label, o: Label, w: W, s: StateId) -> StdArc<W> {
+        StdArc::new(i, o, w, s)
+    }
+
     fn ilabel(&self) -> Label {
         self.ilabel
     }
@@ -92,48 +100,63 @@ impl<W: Weight> StdArc<W> {
 
 ////////// STATE
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
-pub struct VecState<W: Weight> {
+pub struct VecState<W: Weight, A: Arc<W>> {
     finalweight: W,
-    arcs: Vec<StdArc<W>>
+    arcs: Vec<A>
 }
 
-impl<W: Weight> VecState<W> {
-    fn new(finalweight: W) -> VecState<W> {
+impl<W: Weight, A: Arc<W>> VecState<W, A> {
+    fn new(finalweight: W) -> VecState<W, A> {
         VecState { finalweight: finalweight,
                    arcs: Vec::new() }
     }
 }
 
-impl<W: Weight> State<W> for VecState<W> {
-    type Arc = StdArc<W>;
+impl<W: Weight, A: Arc<W>> State<W, A> for VecState<W, A> {
+    fn new(finalweight: W) -> VecState<W, A> {
+        VecState::new(finalweight)
+    }
+
+    fn get_finalweight(&self) -> W {
+        self.finalweight
+    }
+
+    fn set_finalweight(&mut self, finalweight: W) {
+        self.finalweight = finalweight;
+    }
+
+    fn add_arc(&mut self, ilabel: Label, olabel: Label, weight: W, target: StateId) {
+        self.arcs.push(A::new(ilabel, olabel, weight, target))
+    }
+
 }
 
 ////////// FST
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
-pub struct VecFst<W: Weight> {
-    states: Vec<VecState<W>>,   //we need to make sure that element indexes are always consistent with arcs
+pub struct VecFst<W: Weight, A: Arc<W>, S: State<W, A>> {
+    states: Vec<S>,   //we need to make sure that element indexes are always consistent with arcs
     startstate: Option<usize>,
     isyms: Option<Vec<String>>,
-    osyms: Option<Vec<String>>
+    osyms: Option<Vec<String>>,
+    wmarker: PhantomData<W>,
+    amarker: PhantomData<A>
 }
 
-impl<W: Weight> Fst<W> for VecFst<W> {
-    type State = VecState<W>;
-
+impl<W: Weight, A: Arc<W>, S: State<W, A>> Fst<W, A, S> for VecFst<W, A, S> {
     fn get_start(&self) -> Option<StateId> {
         self.startstate
     }
 
     fn get_finalweight(&self, id: StateId) -> W {
-        self.states[id].finalweight
+        self.states[id].get_finalweight()
     }
 
-    fn state(&self, id: StateId) -> Option<&Self::State> {
+    fn state(&self, id: StateId) -> Option<&S> {
         self.states.get(id)
     }
 }
 
-impl<W: Weight> MutableFst<W> for VecFst<W> {  
+impl<W: Weight, A: Arc<W>, S: State<W, A>> MutableFst<W, A, S> for VecFst<W, A, S> {  
     fn set_start(&mut self, id: StateId) {
         assert!(id < self.states.len());
         self.startstate = Some(id);
@@ -141,72 +164,76 @@ impl<W: Weight> MutableFst<W> for VecFst<W> {
 
     fn add_state(&mut self, finalweight: W) -> StateId {
         let id = self.states.len();
-        self.states.push(VecState::new(finalweight));
+        self.states.push(S::new(finalweight));
         id
     }
 
-    fn del_state(&mut self, id: StateId) {
-        assert!(id != self.startstate.unwrap());
-        self.states.remove(id);
-        //update arcs in remaining states
-        for i in 0..self.states.len() {
-            for j in 0..self.states[i].arcs.len() {
-                if self.states[i].arcs[j].nextstate == id {
-                    self.states[i].arcs.remove(j);
-                } else if self.states[i].arcs[j].nextstate > id {
-                    self.states[i].arcs[j].nextstate -= 1;
-                }
-            }
-        }
-    }
+    // fn del_state(&mut self, id: StateId) {
+    //     assert!(id != self.startstate.unwrap());
+    //     self.states.remove(id);
+    //     //update arcs in remaining states
+    //     for i in 0..self.states.len() {
+    //         for j in 0..self.states[i].arcs.len() {
+    //             if self.states[i].arcs[j].nextstate == id {
+    //                 self.states[i].arcs.remove(j);
+    //             } else if self.states[i].arcs[j].nextstate > id {
+    //                 self.states[i].arcs[j].nextstate -= 1;
+    //             }
+    //         }
+    //     }
+    // }
 
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W) {
         assert!(source < self.states.len());
         assert!(target < self.states.len());
-        self.states[source].arcs.push(StdArc::new(ilabel, olabel, weight, target));
+        self.states[source].add_arc(ilabel, olabel, weight, target)
     }
 
     fn set_finalweight(&mut self, id: StateId, finalweight: W) {
         assert!(id < self.states.len());
-        self.states[id].finalweight = finalweight;
+        self.states[id].set_finalweight(finalweight);
     }
 }
 
-impl<W: Weight> ExpandedFst<W> for VecFst<W> {  
+impl<W: Weight, A: Arc<W>, S: State<W, A>> ExpandedFst<W, A, S> for VecFst<W, A, S> {  
     fn get_numstates(&self) -> usize {
         self.states.len()
     }
 }
 
 
-impl<W: Weight> VecFst<W> {
-    pub fn new() -> VecFst<W> {
+impl<W: Weight, A: Arc<W>, S: State<W, A>> VecFst<W, A, S> {
+    pub fn new() -> VecFst<W, A, S> {
         VecFst { states: Vec::new(),
                  startstate: None,
                  isyms: None,
-                 osyms: None }
+                 osyms: None,
+                 wmarker: PhantomData,
+                 amarker: PhantomData }
 
     }
 }
 
 ////////// DEMIT: Implement IntoIterator on State?
-impl<W: Weight> IntoIterator for VecState<W> {
-    type Item = <VecState<W> as State<W>>::Arc;
-    type IntoIter = vec::IntoIter<Self::Item>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.arcs.into_iter()
-    }
-}
+// impl<W: Weight> IntoIterator for VecState<W> {
+//     type Item = <VecState<W> as State<W>>::Arc;
+//     type IntoIter = vec::IntoIter<Self::Item>;
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.arcs.into_iter()
+//     }
+// }
 
-impl<'a, W: Weight> IntoIterator for &'a VecState<W> {
-    type Item = &'a <VecState<W> as State<W>>::Arc;
-    type IntoIter = slice::Iter<'a, <VecState<W> as State<W>>::Arc>;
-    fn into_iter(self) -> Self::IntoIter {
-        (&self.arcs).into_iter()
-    }
-}
+// impl<'a, W: Weight> IntoIterator for &'a VecState<W> {
+//     type Item = &'a <VecState<W> as State<W>>::Arc;
+//     type IntoIter = slice::Iter<'a, <VecState<W> as State<W>>::Arc>;
+//     fn into_iter(self) -> Self::IntoIter {
+//         (&self.arcs).into_iter()
+//     }
+// }
 
 
+//// Aliases
+pub type StdFst = VecFst<TropicalWeight<f32>, StdArc<TropicalWeight<f32>>, VecState<TropicalWeight<f32>, StdArc<TropicalWeight<f32>>>>;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////// MODULES
