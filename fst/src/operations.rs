@@ -45,7 +45,7 @@ pub fn unextendfinal<'a, W, A, S, F> (fst: &'a mut F)
 
     //Transfer finalweight from final arcs to new final states
     for i in 0..fst.get_numstates() {
-        let arcs = fst.state(i).unwrap().into_iter().collect::<Vec<_>>();
+        let arcs = fst.state(i).unwrap().into_iter().cloned().collect::<Vec<_>>();
         for arc in arcs {
             //let a: i32 = arc;
             if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {

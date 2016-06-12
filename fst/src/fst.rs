@@ -46,7 +46,7 @@ pub trait State<W: Weight, A: Arc<W>>: Debug + IntoIterator {
     fn add_arc(&mut self, ilabel: Label, olabel: Label, weight: W, target: StateId); //DEMIT: Should be MutableState
 } 
 
-pub trait Arc<W: Weight>: Debug {
+pub trait Arc<W: Weight>: Clone + Debug {
     fn new(i: Label, o: Label, w: W, s: StateId) -> Self;
     fn ilabel(&self) -> Label;
     fn olabel(&self) -> Label;
