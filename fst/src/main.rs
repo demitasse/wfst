@@ -48,7 +48,7 @@ fn main() {
     println!("==============================");
     println!("");
 
-    for arc in fst.state(1).unwrap().into_iter().cloned().collect::<Vec<_>>() {
+    for arc in fst.state(1).unwrap().into_iter().collect::<Vec<_>>() {
         // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
         let ss = fst.add_state(TropicalWeight::<f32>::one());
         fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());

@@ -26,10 +26,10 @@ pub fn extendfinal<W: Weight, A: Arc<W>, S: State<W, A>, T: ExpandedFst<W, A, S>
 
 pub fn unextendfinal<'a, W, A, S, F> (fst: &'a mut F)
     where     W: Weight,
-              A: 'a + Arc<W>,
+              A: Arc<W>,
               S: 'a + State<W, A>,
               F: ExpandedFst<W, A, S> + MutableFst<W, A, S>,
-          &'a S: IntoIterator<Item=&'a A>,
+          &'a S: IntoIterator<Item=A>,
 {
     //Find final state (assuming only one exists)
     let mut finalstate = 0;
@@ -40,16 +40,13 @@ pub fn unextendfinal<'a, W, A, S, F> (fst: &'a mut F)
         }
     }
     
-    
-
-
     //Transfer finalweight from final arcs to new final states
     for i in 0..fst.get_numstates() {
-        let arcs = fst.state(i).unwrap().into_iter().cloned().collect::<Vec<_>>();
+        let arcs = fst.state(i).unwrap().into_iter().collect::<Vec<_>>();
         for arc in arcs {
             //let a: i32 = arc;
             if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
-                fst.set_finalweight(i, arc.weight());
+                //fst.set_finalweight(i, arc.weight());
             }
         }
     }

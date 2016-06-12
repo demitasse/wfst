@@ -3,7 +3,6 @@ extern crate rustc_serialize;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::vec;
-use std::slice;
 
 extern crate semiring;
 use semiring::*;
@@ -46,7 +45,7 @@ pub trait State<W: Weight, A: Arc<W>>: Debug + IntoIterator {
     fn add_arc(&mut self, ilabel: Label, olabel: Label, weight: W, target: StateId); //DEMIT: Should be MutableState
 } 
 
-pub trait Arc<W: Weight>: Clone + Debug {
+pub trait Arc<W: Weight>: Debug + Copy + Clone  {
     fn new(i: Label, o: Label, w: W, s: StateId) -> Self;
     fn ilabel(&self) -> Label;
     fn olabel(&self) -> Label;
@@ -59,7 +58,7 @@ pub trait Arc<W: Weight>: Clone + Debug {
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////// ARC
-#[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Copy, Debug, Hash, RustcEncodable, RustcDecodable)]
 pub struct StdArc<W: Weight> {
     ilabel: Label,
     olabel: Label,
@@ -226,11 +225,41 @@ impl<W: Weight, A: Arc<W>> IntoIterator for VecState<W, A> {
 }
 
 impl<'a, W: Weight, A: Arc<W>> IntoIterator for &'a VecState<W, A> {
-    type Item = &'a A;
-    type IntoIter = slice::Iter<'a, A>;
+    type Item = A;
+    type IntoIter = VecArcIterator<'a, W, A>;
     fn into_iter(self) -> Self::IntoIter {
-        println!("d2");
-        (&self.arcs).into_iter()
+        VecArcIterator { state: self,
+                         arcindex: None }
+    }
+}
+
+#[derive(Debug)]
+pub struct VecArcIterator<'a, W, A>
+    where W: 'a + Weight,
+          A: 'a + Arc<W>
+{
+    state: &'a VecState<W, A>,
+    arcindex: Option<usize>
+}
+
+impl<'a, W, A> Iterator for VecArcIterator<'a, W, A>
+    where W: 'a + Weight,
+          A: 'a + Arc<W>
+{
+    type Item = A;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.arcindex =
+            if self.arcindex.is_none() {
+                Some(0)
+            } else {
+                Some(self.arcindex.unwrap() + 1)
+            };
+        if self.arcindex.unwrap() < self.state.arcs.len() {
+            Some(self.state.arcs[self.arcindex.unwrap()])
+        } else {
+            None
+        }
     }
 }
 
