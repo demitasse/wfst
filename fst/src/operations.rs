@@ -24,7 +24,13 @@ pub fn extendfinal<W: Weight, A: Arc<W>, S: State<W, A>, T: ExpandedFst<W, A, S>
     }
 }
 
-pub fn unextendfinal<W: Weight, A: Arc<W>, S: State<W, A>, T: ExpandedFst<W, A, S> + MutableFst<W, A, S>> (fst: &mut T) {
+pub fn unextendfinal<'a, W, A, S, F> (fst: &'a mut F)
+    where     W: Weight,
+              A: 'a + Arc<W>,
+              S: 'a + State<W, A>,
+              F: ExpandedFst<W, A, S> + MutableFst<W, A, S>,
+          &'a S: IntoIterator<Item=&'a A>,
+{
     //Find final state (assuming only one exists)
     let mut finalstate = 0;
     for i in 0..fst.get_numstates() {
@@ -34,23 +40,19 @@ pub fn unextendfinal<W: Weight, A: Arc<W>, S: State<W, A>, T: ExpandedFst<W, A, 
         }
     }
     
-    {
-        let borrowed_state = fst.state(0).unwrap();
-        println!("..........{:?}", borrowed_state);
-        println!("");
-        println!("..........{:?}", finalstate);
-        println!("");
-    }
+    
 
 
     //Transfer finalweight from final arcs to new final states
-    // for i in 0..fst.get_numstates() {
-    //     for arc in fst.arc_iter(i).cloned().collect::<Vec<_>>() {
-    //         if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
-    //             fst.set_finalweight(i, arc.weight());
-    //         }
-    //     }
-    // }
-    //fst.del_state(finalstate);
+    for i in 0..fst.get_numstates() {
+        let arcs = fst.state(i).unwrap().into_iter().collect::<Vec<_>>();
+        for arc in arcs {
+            //let a: i32 = arc;
+            if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
+                fst.set_finalweight(i, arc.weight());
+            }
+        }
+    }
+    fst.state(0);//del_state(finalstate);
     
 }

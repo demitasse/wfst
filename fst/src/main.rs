@@ -33,38 +33,43 @@ fn main() {
         println!("");
     }
     println!("{:?}", fst.get_finalweight(1));
+    println!("==============================");
     println!("");
 
-    // for arc in fst.state(1) {
-    //     //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
-    //     // AS IMMUTABLE:
-    //     //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
-    //     //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
+    for arc in fst.state(0).unwrap() {
+        //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
+        // AS IMMUTABLE:
+        //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
+        //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
         
-    //     //let a: i32 = arc; //DEMIT: typecheck
-    //     println!("{:?}", arc);
-    // }
-    // println!("");
+        //let a: i32 = arc; //DEMIT: debug typecheck
+        println!("\t{:?}", arc);
+    }
+    println!("==============================");
+    println!("");
 
-    // for arc in fst.state(1).into_iter().cloned().collect::<Vec<_>>() {
-    //     // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
+    for arc in fst.state(1).unwrap().into_iter().cloned().collect::<Vec<_>>() {
+        // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
+        let ss = fst.add_state(TropicalWeight::<f32>::one());
+        fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());
 
-    //     //let a: i32 = arc.clone(); //DEMIT: typecheck
-    //     let ss = fst.add_state(TropicalWeight::<f32>::one());
-    //     fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());
-
-    //     println!("{:?}", arc);
-    // }
+        //let a: i32 = arc; //DEMIT: debug typecheck
+        println!("\t{:?}", arc);
+    }
     
     println!("");
     println!("{:?}", fst);
     println!("");
     println!("Number of states: {}", fst.get_numstates());    
+    println!("==============================");
+    println!("");
     fstops::extendfinal(&mut fst);
     println!("");
     println!("{:?}", fst);    
     println!("");
     println!("Number of states: {}", fst.get_numstates());    
+    println!("==============================");
+    println!("");
     fstops::unextendfinal(&mut fst);
     println!("");
     println!("{:?}", fst);    

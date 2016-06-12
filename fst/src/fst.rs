@@ -2,8 +2,8 @@ extern crate rustc_serialize;
 
 use std::fmt::Debug;
 use std::marker::PhantomData;
-//use std::vec;
-//use std::slice;
+use std::vec;
+use std::slice;
 
 extern crate semiring;
 use semiring::*;
@@ -39,7 +39,7 @@ pub trait ExpandedFst<W: Weight, A: Arc<W>, S: State<W, A>>: Fst<W, A, S> {
     fn get_numstates(&self) -> usize;
 }
 
-pub trait State<W: Weight, A: Arc<W>>: Debug { //: IntoIterator;
+pub trait State<W: Weight, A: Arc<W>>: Debug + IntoIterator {
     fn new(W) -> Self;
     fn get_finalweight(&self) -> W;       //Weight is Copy
     fn set_finalweight(&mut self, finalweight: W);
@@ -131,6 +131,7 @@ impl<W: Weight, A: Arc<W>> State<W, A> for VecState<W, A> {
 
 }
 
+
 ////////// FST
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
 pub struct VecFst<W: Weight, A: Arc<W>, S: State<W, A>> {
@@ -214,22 +215,24 @@ impl<W: Weight, A: Arc<W>, S: State<W, A>> VecFst<W, A, S> {
     }
 }
 
-////////// DEMIT: Implement IntoIterator on State?
-// impl<W: Weight> IntoIterator for VecState<W> {
-//     type Item = <VecState<W> as State<W>>::Arc;
-//     type IntoIter = vec::IntoIter<Self::Item>;
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.arcs.into_iter()
-//     }
-// }
+//// Arc Iterators
+impl<W: Weight, A: Arc<W>> IntoIterator for VecState<W, A> {
+    type Item = A;
+    type IntoIter = vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        println!("d1");
+        self.arcs.into_iter()
+    }
+}
 
-// impl<'a, W: Weight> IntoIterator for &'a VecState<W> {
-//     type Item = &'a <VecState<W> as State<W>>::Arc;
-//     type IntoIter = slice::Iter<'a, <VecState<W> as State<W>>::Arc>;
-//     fn into_iter(self) -> Self::IntoIter {
-//         (&self.arcs).into_iter()
-//     }
-// }
+impl<'a, W: Weight, A: Arc<W>> IntoIterator for &'a VecState<W, A> {
+    type Item = &'a A;
+    type IntoIter = slice::Iter<'a, A>;
+    fn into_iter(self) -> Self::IntoIter {
+        println!("d2");
+        (&self.arcs).into_iter()
+    }
+}
 
 
 //// Aliases
