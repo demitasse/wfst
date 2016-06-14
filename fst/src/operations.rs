@@ -4,9 +4,9 @@ extern crate semiring;
 use std::vec::Vec;
 
 use semiring::Weight;
-use {ExpandedFst, MutableFst, StateId, Arc, State};
+use {Fst, ExpandedFst, MutableFst, StateId, Arc};
 
-pub fn extendfinal<W: Weight, A: Arc<W>, S: State<W, A>, T: ExpandedFst<W, A, S> + MutableFst<W, A, S>> (fst: &mut T) {
+pub fn extendfinal<'a, W: Weight + 'a, F: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &mut F) {
     //Collect current final states
     let mut finalstates: Vec<StateId> = Vec::new();
     for i in 0..fst.get_numstates() {
@@ -24,12 +24,8 @@ pub fn extendfinal<W: Weight, A: Arc<W>, S: State<W, A>, T: ExpandedFst<W, A, S>
     }
 }
 
-pub fn unextendfinal<'a, W, A, S, F> (fst: &'a mut F)
-    where     W: Weight,
-              A: Arc<W>,
-              S: 'a + State<W, A>,
-              F: ExpandedFst<W, A, S> + MutableFst<W, A, S>,
-          &'a S: IntoIterator<Item=A>,
+pub fn unextendfinal<'a, W: Weight + 'a, F: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &'a mut F)
+    where <<F as Fst<'a, W>>::Iter as Iterator>::Item: Arc<W>
 {
     //Find final state (assuming only one exists)
     let mut finalstate = 0;
@@ -40,16 +36,25 @@ pub fn unextendfinal<'a, W, A, S, F> (fst: &'a mut F)
         }
     }
     
-    //Transfer finalweight from final arcs to new final states
-    for i in 0..fst.get_numstates() {
-        let arcs = fst.state(i).unwrap().into_iter().collect::<Vec<_>>();
-        for arc in arcs {
-            //let a: i32 = arc;
-            if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
-                //fst.set_finalweight(i, arc.weight());
-            }
-        }
+    let a = fst.arc_iter(1).collect::<Vec<_>>(); //DEMIT: something to do with "autoref" lifetime in sig (fst: &'a mut F)
+    for arc in a {
+        println!("ARC:{:?}", arc);
+        let s3 = fst.add_state(W::zero());
+        let s4 = fst.add_state(W::zero());
+        fst.add_arc(s3, s4, 0, 0, W::zero());
     }
-    fst.state(0);//del_state(finalstate);
+
+
+    // //Transfer finalweight from final arcs to new final states
+    // for i in 0..fst.get_numstates() {
+    //     let arcs = fst.state(i).unwrap().into_iter().collect::<Vec<_>>();
+    //     for arc in arcs {
+    //         //let a: i32 = arc;
+    //         if arc.ilabel() == 0 && arc.olabel() == 0 && arc.nextstate() == finalstate {
+    //             //fst.set_finalweight(i, arc.weight());
+    //         }
+    //     }
+    // }
+    // fst.state(0);//del_state(finalstate);
     
 }

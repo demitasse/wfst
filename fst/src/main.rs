@@ -2,8 +2,8 @@ extern crate semiring;
 extern crate fst;
 
 use semiring::{TropicalWeight, Weight};
-use fst::{StdFst, StdArc, Arc, Fst, State, MutableFst, ExpandedFst};
-use fst::operations as fstops;
+use fst::{StdArc, Arc, VecFst, Fst, MutableFst, ExpandedFst};
+use fst::operations as fst_ops;
 
 fn main() {
 
@@ -16,7 +16,7 @@ fn main() {
     println!("Nextstate: {:?}", c.nextstate());
     println!("");
 
-    let mut fst = StdFst::new();
+    let mut fst = VecFst::<TropicalWeight<f32>>::new();
     let s0 = fst.add_state(TropicalWeight::<f32>::zero());
     let s1 = fst.add_state(TropicalWeight::<f32>::zero());
     let s2 = fst.add_state(TropicalWeight::<f32>::one());
@@ -27,35 +27,24 @@ fn main() {
     println!("{:?}", fst);
     println!("");
     
-    {
-        let borrowed_state = fst.state(1).unwrap();
-        println!("{:?}", borrowed_state.get_finalweight());
-        println!("");
-    }
-    println!("{:?}", fst.get_finalweight(1));
-    println!("==============================");
-    println!("");
-
-    for arc in fst.state(0).unwrap() {
+    for arc in fst.arc_iter(1) {
         //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
         // AS IMMUTABLE:
         //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
         //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
-        
-        //let a: i32 = arc; //DEMIT: debug typecheck
-        println!("\t{:?}", arc);
+        println!("{:?}", arc);
     }
-    println!("==============================");
     println!("");
 
-    for arc in fst.state(1).unwrap().into_iter().collect::<Vec<_>>() {
-        // CAN DO THIS NOW BECAUSE COLLECTED CLONES OF ARCS:
-        let ss = fst.add_state(TropicalWeight::<f32>::one());
-        fst.add_arc(s0, ss, 0, 0, TropicalWeight::<f32>::zero());
 
-        //let a: i32 = arc; //DEMIT: debug typecheck
-        println!("\t{:?}", arc);
+    for arc in fst.arc_iter(1).collect::<Vec<_>>() {
+        // CAN DO THIS NOW BECAUSE COLLECTED ARCS AND ITERATING OVER VEC:
+        let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
+        fst.add_arc(s0, s3, 0, 0, TropicalWeight::new(Some(3.0)));
+
+        println!("{:?}", arc);
     }
+
     
     println!("");
     println!("{:?}", fst);
@@ -63,14 +52,14 @@ fn main() {
     println!("Number of states: {}", fst.get_numstates());    
     println!("==============================");
     println!("");
-    fstops::extendfinal(&mut fst);
+    fst_ops::extendfinal(&mut fst);
     println!("");
     println!("{:?}", fst);    
     println!("");
     println!("Number of states: {}", fst.get_numstates());    
     println!("==============================");
     println!("");
-    fstops::unextendfinal(&mut fst);
+    fst_ops::unextendfinal(&mut fst);
     println!("");
     println!("{:?}", fst);    
     println!("");

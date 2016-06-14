@@ -1,8 +1,6 @@
 extern crate rustc_serialize;
 
 use std::fmt::Debug;
-use std::marker::PhantomData;
-use std::vec;
 
 extern crate semiring;
 use semiring::*;
@@ -18,15 +16,16 @@ use semiring::*;
 pub type Label = usize;
 pub type StateId = usize;
 
-pub trait Fst<W: Weight, A: Arc<W>, S: State<W, A>>: Debug {
+pub trait Fst<'a, W: Weight>: Debug {
+    type Iter: Iterator;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
-    fn state(&self, StateId) -> Option<&S>;
+    fn arc_iter(&'a self, StateId) -> Self::Iter;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
 // implementations):
-pub trait MutableFst<W: Weight, A: Arc<W>, S: State<W, A>>: Fst<W, A, S> {
+pub trait MutableFst<'a, W: 'a + Weight>: Fst<'a, W> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
 //    fn del_state(&mut self, StateId);
@@ -34,16 +33,9 @@ pub trait MutableFst<W: Weight, A: Arc<W>, S: State<W, A>>: Fst<W, A, S> {
     fn set_finalweight(&mut self, id: StateId, finalweight: W);
 }
 
-pub trait ExpandedFst<W: Weight, A: Arc<W>, S: State<W, A>>: Fst<W, A, S> {
+pub trait ExpandedFst<'a, W: 'a + Weight>: Fst<'a, W> {
     fn get_numstates(&self) -> usize;
 }
-
-pub trait State<W: Weight, A: Arc<W>>: Debug + IntoIterator {
-    fn new(W) -> Self;
-    fn get_finalweight(&self) -> W;       //Weight is Copy
-    fn set_finalweight(&mut self, finalweight: W);
-    fn add_arc(&mut self, ilabel: Label, olabel: Label, weight: W, target: StateId); //DEMIT: Should be MutableState
-} 
 
 pub trait Arc<W: Weight>: Debug + Copy + Clone  {
     fn new(i: Label, o: Label, w: W, s: StateId) -> Self;
@@ -99,64 +91,45 @@ impl<W: Weight> StdArc<W> {
 
 ////////// STATE
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
-pub struct VecState<W: Weight, A: Arc<W>> {
+pub struct VecState<W: Weight> {
     finalweight: W,
-    arcs: Vec<A>
+    arcs: Vec<StdArc<W>>
 }
 
-impl<W: Weight, A: Arc<W>> VecState<W, A> {
-    fn new(finalweight: W) -> VecState<W, A> {
+impl<W: Weight> VecState<W> {
+    fn new(finalweight: W) -> VecState<W> {
         VecState { finalweight: finalweight,
                    arcs: Vec::new() }
     }
 }
 
-impl<W: Weight, A: Arc<W>> State<W, A> for VecState<W, A> {
-    fn new(finalweight: W) -> VecState<W, A> {
-        VecState::new(finalweight)
-    }
-
-    fn get_finalweight(&self) -> W {
-        self.finalweight
-    }
-
-    fn set_finalweight(&mut self, finalweight: W) {
-        self.finalweight = finalweight;
-    }
-
-    fn add_arc(&mut self, ilabel: Label, olabel: Label, weight: W, target: StateId) {
-        self.arcs.push(A::new(ilabel, olabel, weight, target))
-    }
-
-}
-
-
 ////////// FST
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
-pub struct VecFst<W: Weight, A: Arc<W>, S: State<W, A>> {
-    states: Vec<S>,   //we need to make sure that element indexes are always consistent with arcs
+pub struct VecFst<W: Weight> {
+    states: Vec<VecState<W>>,   //we need to make sure that element indexes are always consistent with arcs
     startstate: Option<usize>,
     isyms: Option<Vec<String>>,
     osyms: Option<Vec<String>>,
-    wmarker: PhantomData<W>,
-    amarker: PhantomData<A>
 }
 
-impl<W: Weight, A: Arc<W>, S: State<W, A>> Fst<W, A, S> for VecFst<W, A, S> {
+impl<'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
+    type Iter = VecArcIterator<'a, W>;
+
     fn get_start(&self) -> Option<StateId> {
         self.startstate
     }
 
     fn get_finalweight(&self, id: StateId) -> W {
-        self.states[id].get_finalweight()
+        self.states[id].finalweight
     }
 
-    fn state(&self, id: StateId) -> Option<&S> {
-        self.states.get(id)
+    fn arc_iter(&'a self, id: StateId) -> Self::Iter {
+         VecArcIterator { state: &self.states[id],
+                          arcindex: None }
     }
 }
 
-impl<W: Weight, A: Arc<W>, S: State<W, A>> MutableFst<W, A, S> for VecFst<W, A, S> {  
+impl<'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {  
     fn set_start(&mut self, id: StateId) {
         assert!(id < self.states.len());
         self.startstate = Some(id);
@@ -164,7 +137,7 @@ impl<W: Weight, A: Arc<W>, S: State<W, A>> MutableFst<W, A, S> for VecFst<W, A, 
 
     fn add_state(&mut self, finalweight: W) -> StateId {
         let id = self.states.len();
-        self.states.push(S::new(finalweight));
+        self.states.push(VecState::new(finalweight));
         id
     }
 
@@ -186,67 +159,40 @@ impl<W: Weight, A: Arc<W>, S: State<W, A>> MutableFst<W, A, S> for VecFst<W, A, 
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W) {
         assert!(source < self.states.len());
         assert!(target < self.states.len());
-        self.states[source].add_arc(ilabel, olabel, weight, target)
+        self.states[source].arcs.push(StdArc::new(ilabel, olabel, weight, target))
     }
 
     fn set_finalweight(&mut self, id: StateId, finalweight: W) {
         assert!(id < self.states.len());
-        self.states[id].set_finalweight(finalweight);
+        self.states[id].finalweight = finalweight;
     }
 }
 
-impl<W: Weight, A: Arc<W>, S: State<W, A>> ExpandedFst<W, A, S> for VecFst<W, A, S> {  
+impl<'a, W: 'a + Weight> ExpandedFst<'a, W> for VecFst<W> {  
     fn get_numstates(&self) -> usize {
         self.states.len()
     }
 }
 
 
-impl<W: Weight, A: Arc<W>, S: State<W, A>> VecFst<W, A, S> {
-    pub fn new() -> VecFst<W, A, S> {
+impl<W: Weight> VecFst<W> {
+    pub fn new() -> VecFst<W> {
         VecFst { states: Vec::new(),
                  startstate: None,
                  isyms: None,
-                 osyms: None,
-                 wmarker: PhantomData,
-                 amarker: PhantomData }
-
+                 osyms: None }
     }
 }
 
 //// Arc Iterators
-impl<W: Weight, A: Arc<W>> IntoIterator for VecState<W, A> {
-    type Item = A;
-    type IntoIter = vec::IntoIter<Self::Item>;
-    fn into_iter(self) -> Self::IntoIter {
-        println!("d1");
-        self.arcs.into_iter()
-    }
-}
-
-impl<'a, W: Weight, A: Arc<W>> IntoIterator for &'a VecState<W, A> {
-    type Item = A;
-    type IntoIter = VecArcIterator<'a, W, A>;
-    fn into_iter(self) -> Self::IntoIter {
-        VecArcIterator { state: self,
-                         arcindex: None }
-    }
-}
-
 #[derive(Debug)]
-pub struct VecArcIterator<'a, W, A>
-    where W: 'a + Weight,
-          A: 'a + Arc<W>
-{
-    state: &'a VecState<W, A>,
+pub struct VecArcIterator<'a, W: 'a + Weight> {
+    state: &'a VecState<W>,
     arcindex: Option<usize>
 }
 
-impl<'a, W, A> Iterator for VecArcIterator<'a, W, A>
-    where W: 'a + Weight,
-          A: 'a + Arc<W>
-{
-    type Item = A;
+impl<'a, W: Weight> Iterator for VecArcIterator<'a, W> {
+    type Item = StdArc<W>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.arcindex =
@@ -262,10 +208,6 @@ impl<'a, W, A> Iterator for VecArcIterator<'a, W, A>
         }
     }
 }
-
-
-//// Aliases
-pub type StdFst = VecFst<TropicalWeight<f32>, StdArc<TropicalWeight<f32>>, VecState<TropicalWeight<f32>, StdArc<TropicalWeight<f32>>>>;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////// MODULES
