@@ -2,7 +2,7 @@ extern crate semiring;
 extern crate fst;
 
 use semiring::{TropicalWeight, Weight};
-use fst::{StdArc, Arc, VecFst, Fst, MutableFst, ExpandedFst};
+use fst::{StdArc, Arc, VecFst, MutableFst, ExpandedFst, VecArcIterator};
 use fst::operations as fst_ops;
 
 fn main() {
@@ -27,23 +27,28 @@ fn main() {
     println!("{:?}", fst);
     println!("");
     
-    for arc in fst.arc_iter(1) {
-        //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
-        // AS IMMUTABLE:
-        //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
-        //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
-        println!("{:?}", arc);
+    for a in VecArcIterator::new(&fst, 1).collect::<Vec<_>>() {
+        println!("{:?}", a);
+        fst.add_state(TropicalWeight::new(Some(23.0)));
     }
-    println!("");
+
+    // for arc in fst.arc_iter(1) {
+    //     //CAN'T DO ANY OF THE FOLLOWING, BECAUSE ITERATOR BORROWS `fst`
+    //     // AS IMMUTABLE:
+    //     //let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
+    //     //fst.add_arc(s0, s2, 0, 0, TropicalWeight::new(Some(2.0)));
+    //     println!("{:?}", arc);
+    // }
+    // println!("");
 
 
-    for arc in fst.arc_iter(1).collect::<Vec<_>>() {
-        // CAN DO THIS NOW BECAUSE COLLECTED ARCS AND ITERATING OVER VEC:
-        let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
-        fst.add_arc(s0, s3, 0, 0, TropicalWeight::new(Some(3.0)));
+    // for arc in fst.arc_iter(1).collect::<Vec<_>>() {
+    //     // CAN DO THIS NOW BECAUSE COLLECTED ARCS AND ITERATING OVER VEC:
+    //     let s3 = fst.add_state(TropicalWeight::new(Some(23.0)));
+    //     fst.add_arc(s0, s3, 0, 0, TropicalWeight::new(Some(3.0)));
 
-        println!("{:?}", arc);
-    }
+    //     println!("{:?}", arc);
+    // }
 
     
     println!("");
@@ -59,10 +64,10 @@ fn main() {
     println!("Number of states: {}", fst.get_numstates());    
     println!("==============================");
     println!("");
-    fst_ops::unextendfinal(&mut fst);
-    println!("");
-    println!("{:?}", fst);    
-    println!("");
-    println!("Number of states: {}", fst.get_numstates());    
+    // fst_ops::unextendfinal(&mut fst);
+    // println!("");
+    // println!("{:?}", fst);    
+    // println!("");
+    // println!("Number of states: {}", fst.get_numstates());    
 
 }

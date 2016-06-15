@@ -20,7 +20,6 @@ pub trait Fst<'a, W: Weight>: Debug {
     type Iter: Iterator;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
-    fn arc_iter(&'a self, StateId) -> Self::Iter;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
@@ -43,6 +42,11 @@ pub trait Arc<W: Weight>: Debug + Copy + Clone  {
     fn olabel(&self) -> Label;
     fn weight(&self) -> W;
     fn nextstate(&self) -> StateId;
+}
+
+pub trait ArcIterator<'a, W: Weight, F: Fst<'a, W>>: Iterator {
+    type F: Fst<'a, W>;
+    fn new(&'a Self::F, StateId) -> Self;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -122,12 +126,6 @@ impl<'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
     fn get_finalweight(&self, id: StateId) -> W {
         self.states[id].finalweight
     }
-
-    fn arc_iter(&'a self, id: StateId) -> Self::Iter {
-        VecArcIterator { fst: &self,
-                         state: id,
-                         arcindex: None }
-    }
 }
 
 impl<'a, W: 'a + Weight> MutableFst<'a, W> for VecFst<W> {  
@@ -192,6 +190,25 @@ pub struct VecArcIterator<'a, W: 'a + Weight> {
     state: StateId,
     arcindex: Option<usize>
 }
+
+impl<'a, W: Weight> VecArcIterator<'a, W> {
+    pub fn new(fst: &'a VecFst<W>, id: StateId) -> VecArcIterator<'a, W> {
+        VecArcIterator { fst: fst,
+                         state: id,
+                         arcindex: None }
+    }
+}
+
+impl<'a, W: Weight, F: Fst<'a, W>> ArcIterator<'a, W, F> for VecArcIterator<'a, W> {
+    type F = VecFst<W>;
+
+    fn new(fst: &'a Self::F, id: StateId) -> VecArcIterator<'a, W> {
+        VecArcIterator { fst: fst,
+                         state: id,
+                         arcindex: None }
+    }
+}
+
 
 impl<'a, W: Weight> Iterator for VecArcIterator<'a, W> {
     type Item = StdArc<W>;
