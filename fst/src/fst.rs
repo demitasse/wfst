@@ -25,7 +25,7 @@ pub trait Fst<'a, W: Weight>: Debug {
 
 // This interface defined by looking at OpenFST (C++ and Java
 // implementations):
-pub trait MutableFst<'a, W: 'a + Weight>: Fst<'a, W> {
+pub trait MutableFst<'a, W: Weight>: Fst<'a, W> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
 //    fn del_state(&mut self, StateId);
@@ -33,7 +33,7 @@ pub trait MutableFst<'a, W: 'a + Weight>: Fst<'a, W> {
     fn set_finalweight(&mut self, id: StateId, finalweight: W);
 }
 
-pub trait ExpandedFst<'a, W: 'a + Weight>: Fst<'a, W> {
+pub trait ExpandedFst<'a, W: Weight>: Fst<'a, W> {
     fn get_numstates(&self) -> usize;
 }
 
@@ -124,8 +124,9 @@ impl<'a, W: 'a + Weight> Fst<'a, W> for VecFst<W> {
     }
 
     fn arc_iter(&'a self, id: StateId) -> Self::Iter {
-         VecArcIterator { state: &self.states[id],
-                          arcindex: None }
+        VecArcIterator { fst: &self,
+                         state: id,
+                         arcindex: None }
     }
 }
 
@@ -187,7 +188,8 @@ impl<W: Weight> VecFst<W> {
 //// Arc Iterators
 #[derive(Debug)]
 pub struct VecArcIterator<'a, W: 'a + Weight> {
-    state: &'a VecState<W>,
+    fst: &'a VecFst<W>,
+    state: StateId,
     arcindex: Option<usize>
 }
 
@@ -201,8 +203,8 @@ impl<'a, W: Weight> Iterator for VecArcIterator<'a, W> {
             } else {
                 Some(self.arcindex.unwrap() + 1)
             };
-        if self.arcindex.unwrap() < self.state.arcs.len() {
-            Some(self.state.arcs[self.arcindex.unwrap()])
+        if self.arcindex.unwrap() < self.fst.states[self.state].arcs.len() {
+            Some(self.fst.states[self.state].arcs[self.arcindex.unwrap()])
         } else {
             None
         }

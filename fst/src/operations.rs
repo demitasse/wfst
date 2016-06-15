@@ -6,7 +6,7 @@ use std::vec::Vec;
 use semiring::Weight;
 use {Fst, ExpandedFst, MutableFst, StateId, Arc};
 
-pub fn extendfinal<'a, W: Weight + 'a, F: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &mut F) {
+pub fn extendfinal<'a, W: Weight, F: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &mut F) {
     //Collect current final states
     let mut finalstates: Vec<StateId> = Vec::new();
     for i in 0..fst.get_numstates() {
@@ -24,7 +24,7 @@ pub fn extendfinal<'a, W: Weight + 'a, F: ExpandedFst<'a, W> + MutableFst<'a, W>
     }
 }
 
-pub fn unextendfinal<'a, W: Weight + 'a, F: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &'a mut F)
+pub fn unextendfinal<'a, W: Weight, F: ExpandedFst<'a, W> + MutableFst<'a, W>> (fst: &'a mut F)
     where <<F as Fst<'a, W>>::Iter as Iterator>::Item: Arc<W>
 {
     //Find final state (assuming only one exists)
@@ -36,8 +36,8 @@ pub fn unextendfinal<'a, W: Weight + 'a, F: ExpandedFst<'a, W> + MutableFst<'a, 
         }
     }
     
-    let a = fst.arc_iter(1).collect::<Vec<_>>(); //DEMIT: something to do with "autoref" lifetime in sig (fst: &'a mut F)
-    for arc in a {
+    //let a = fst.arc_iter(1).collect::<Vec<_>>(); //DEMIT: something to do with "autoref" lifetime in sig (fst: &'a mut F)
+    for arc in fst.arc_iter(1).collect::<Vec<_>>() {
         println!("ARC:{:?}", arc);
         let s3 = fst.add_state(W::zero());
         let s4 = fst.add_state(W::zero());
