@@ -2,8 +2,9 @@ extern crate semiring;
 extern crate fst;
 
 use semiring::{TropicalWeight, Weight};
-use fst::{MutableFst, Arc};
+use fst::{Fst, MutableFst, ExpandedFst, Arc};
 use fst::fst_vec::{StdArc, VecFst};
+use fst::gen_algo;
 
 fn main() {
 
@@ -26,4 +27,35 @@ fn main() {
     fst.add_arc(s1, s2, 0, 0, TropicalWeight::<f32>::zero());
     println!("{:?}", fst);
     println!("");
+
+    for a in fst.arc_iter(s0) {
+        println!("{:?}", a);
+        fst.add_state(TropicalWeight::new(Some(23.0)));
+    }
+
+    //The followiing is a no-op since there are no arcs from s2
+    for a in fst.arc_iter(s2) {
+        println!("Hello {:?}", a);
+        fst.add_state(TropicalWeight::new(Some(23.0)));
+    }
+
+    println!("");
+    println!("{:?}", fst);
+    println!("");
+    println!("Number of states: {}", fst.get_numstates());    
+    println!("==============================");
+    println!("");
+    gen_algo::extendfinal(&mut fst);
+    println!("");
+    println!("{:?}", fst);    
+    println!("");
+    println!("Number of states: {}", fst.get_numstates());    
+    println!("==============================");
+    println!("");
+    gen_algo::unextendfinal(&mut fst);
+    println!("");
+    println!("{:?}", fst);    
+    println!("");
+    println!("Number of states: {}", fst.get_numstates());    
+
 }

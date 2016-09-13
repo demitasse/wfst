@@ -1,7 +1,6 @@
 extern crate rustc_serialize;
 
 use std::fmt::Debug;
-use std::iter::IntoIterator;
 
 extern crate semiring;
 use semiring::*;
@@ -30,7 +29,7 @@ pub trait Fst<W: Weight>: Debug {
 pub trait MutableFst<W: Weight>: Fst<W> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
-//    fn del_state(&mut self, StateId);
+    fn del_state(&mut self, StateId);
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W);
     fn set_finalweight(&mut self, id: StateId, finalweight: W);
 }
@@ -45,6 +44,11 @@ pub trait Arc<W: Weight>: Debug + Clone  {
     fn weight(&self) -> W;
     fn nextstate(&self) -> StateId;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+////////// GENERIC FST ALGORITHMS
+////////////////////////////////////////////////////////////////////////////////
+pub mod gen_algo;
 
 
 ////////////////////////////////////////////////////////////////////////////////
