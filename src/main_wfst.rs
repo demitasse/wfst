@@ -1,9 +1,17 @@
+// Author: Daniel van Niekerk <dvn.demitasse@gmail.com>
+//
+// Copyright 2016 The Department of Arts and Culture of the Government
+// of South Africa
+//
+// See the "LICENCE" file for information on usage and redistribution
+// of this file.
+
 extern crate wfst;
 
 use wfst::semiring::{TropicalWeight, Weight};
 use wfst::{Fst, MutableFst, ExpandedFst, Arc};
 use wfst::wfst_vec::{StdArc, VecFst};
-use wfst::gen_algo;
+use wfst::algorithms;
 
 fn main() {
 
@@ -44,14 +52,14 @@ fn main() {
     println!("Number of states: {}", fst.get_numstates());    
     println!("==============================");
     println!("");
-    gen_algo::extendfinal(&mut fst);
+    algorithms::extendfinal(&mut fst);
     println!("");
     println!("{:?}", fst);    
     println!("");
     println!("Number of states: {}", fst.get_numstates());    
     println!("==============================");
     println!("");
-    gen_algo::unextendfinal(&mut fst);
+    algorithms::unextendfinal(&mut fst);
     println!("");
     println!("{:?}", fst);    
     println!("");

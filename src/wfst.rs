@@ -1,3 +1,25 @@
+// Author: Daniel van Niekerk <dvn.demitasse@gmail.com>
+//
+// Copyright 2016 The Department of Arts and Culture of the Government
+// of South Africa
+//
+// See the "LICENCE" file for information on usage and redistribution
+// of this file.
+////////////////////////////////////////////////////////////////////////////////
+
+//! This crate implements Weighted Finite-State Transducers (WFSTs) as
+//! described in:
+//! 
+//! Mehryar Mohri, Fernando Pereira, and Michael Riley. "The design
+//! principles of a weighted finite-state transducer library," In:
+//! *Theoretical Computer Science* vol. 231 issue 1 (2000): pp. 17-32.
+//!
+//! This is a re-implementation in Rust, containing ported fragments
+//! from the following existing projects (see appropriate licences and
+//! attribution in the source repository):
+//!
+//!  * OpenFst (http://www.openfst.org)
+//!  * CMU Sphinx (http://cmusphinx.sourceforge.net/)
 extern crate rustc_serialize;
 
 use std::fmt::Debug;
@@ -28,7 +50,7 @@ pub trait Fst<W: Weight>: Debug {
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
-// implementations):
+// interfaces):
 pub trait MutableFst<W: Weight>: Fst<W> {
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
@@ -51,7 +73,7 @@ pub trait Arc<W: Weight>: Debug + Clone  {
 ////////////////////////////////////////////////////////////////////////////////
 ////////// GENERIC FST ALGORITHMS
 ////////////////////////////////////////////////////////////////////////////////
-pub mod gen_algo;
+pub mod algorithms;
 
 
 ////////////////////////////////////////////////////////////////////////////////

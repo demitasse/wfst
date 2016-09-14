@@ -1,3 +1,16 @@
+// Author: Daniel van Niekerk <dvn.demitasse@gmail.com>
+//
+// Copyright 2016 The Department of Arts and Culture of the Government
+// of South Africa
+//
+// See the "LICENCE" file for information on usage and redistribution
+// of this file.
+////////////////////////////////////////////////////////////////////////////////
+
+//! This module implements the generation of random weights for
+//! testing purposes. See the source file `test_semiring.rs` for
+//! simple examples of intended use.
+
 extern crate rand;
 use self::rand::{Rng, StdRng};
 

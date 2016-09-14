@@ -1,13 +1,40 @@
+// Author: Daniel van Niekerk <dvn.demitasse@gmail.com>
+//
+// Copyright 2016 The Department of Arts and Culture of the Government
+// of South Africa
+//
+// See the "LICENCE" file for information on usage and redistribution
+// of this file.
+//
+// This file contains portions of code ported from CMU Sphinx
+// (http://cmusphinx.sourceforge.net/) under the following copyright
+// and attribution:
+//
+// """
+// Copyright 1999-2012 Carnegie Mellon University.  
+// Portions Copyright 2002 Sun Microsystems, Inc.  
+// Portions Copyright 2002 Mitsubishi Electric Research Laboratories.
+// All Rights Reserved.  Use is subject to license terms.
+// 
+// See the file "LICENCE.cmusphinx" for information on usage and
+// redistribution of this file, and for a DISCLAIMER OF ALL 
+// WARRANTIES.
+// """
+////////////////////////////////////////////////////////////////////////////////
+
+//! This module implements the generic WFST algorithms. See the source
+//! files `main_wfst.rs` for simple examples of intended use.
+
 use super::semiring::{Weight};
 use super::{ExpandedFst, MutableFst, StateId, Arc};
 
 use std::vec::Vec;
 
-/// Extends an Fst to a single final state.
+/// Extends an `Fst` to a single final state.
 ///  
-/// It adds a new final state with a semiring's one final weight and
-/// connects the current final states to it using epsilon transitions with
-/// weight equal to the original final state's weight.
+/// It adds a new final state with a semiring's "one" final weight and
+/// connects the current final states to it using epsilon transitions
+/// with weight equal to the original final state's weight.
 pub fn extendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
     //Collect current final states
     let mut finalstates: Vec<StateId> = Vec::new();
@@ -26,6 +53,7 @@ pub fn extendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
     }
 }
 
+/// Undo of the `extendfinal` operation.
 pub fn unextendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
     //Find final state (assuming only one exists)
     let mut finalstate = 0;

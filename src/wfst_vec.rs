@@ -1,3 +1,16 @@
+// Author: Daniel van Niekerk <dvn.demitasse@gmail.com>
+//
+// Copyright 2016 The Department of Arts and Culture of the Government
+// of South Africa
+//
+// See the "LICENCE" file for information on usage and redistribution
+// of this file.
+
+//! This module implements a mutable `Fst` using `std::vec::Vec`,
+//! interior mutability (`RefCell`) and reference counted pointers
+//! (`Rc`) See the source file `main_wfst.rs` for simple examples of
+//! intended use.
+
 use super::*;
 use super::semiring::Weight;
 
