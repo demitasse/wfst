@@ -1,9 +1,9 @@
-extern crate fst;
+extern crate wfst;
 
-use fst::semiring::{TropicalWeight, Weight};
-use fst::{Fst, MutableFst, ExpandedFst, Arc};
-use fst::fst_vec::{StdArc, VecFst};
-use fst::gen_algo;
+use wfst::semiring::{TropicalWeight, Weight};
+use wfst::{Fst, MutableFst, ExpandedFst, Arc};
+use wfst::wfst_vec::{StdArc, VecFst};
+use wfst::gen_algo;
 
 fn main() {
 

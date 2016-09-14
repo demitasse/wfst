@@ -1,5 +1,5 @@
 [package]
-name = "fst"
+name = "wfst"
 version = "0.1.0"
 authors = ["Daniel van Niekerk <dvn.demitasse@gmail.com>"]
 
@@ -9,12 +9,12 @@ bincode = "*"
 rand = "*"
 
 [lib]
-name = "fst"
-path = "src/fst.rs"
+name = "wfst"
+path = "src/wfst.rs"
 
 [[bin]]
-name = "main_fst"
-path = "src/main_fst.rs"
+name = "main_wfst"
+path = "src/main_wfst.rs"
 
 [[bin]]
 name = "main_semiring"

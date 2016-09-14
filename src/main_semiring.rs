@@ -1,7 +1,7 @@
-extern crate fst;
+extern crate wfst;
 
-use fst::semiring::Weight;
-use fst::semiring::TropicalWeight;
+use wfst::semiring::Weight;
+use wfst::semiring::TropicalWeight;
 
 fn main() {
     {

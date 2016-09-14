@@ -3,9 +3,9 @@ use rand::{SeedableRng, StdRng};
 
 use std::fmt::Debug;
 
-extern crate fst;
-use fst::semiring::test::{RandomWeight, RandomWeightGenerator};
-use fst::semiring::*;
+extern crate wfst;
+use wfst::semiring::test::{RandomWeight, RandomWeightGenerator};
+use wfst::semiring::*;
 
 extern crate rustc_serialize;
 use rustc_serialize::{Encodable, Decodable};
