@@ -18,9 +18,9 @@ Theoretical Computer Science vol. 231 issue 1 (2000): pp. 17-32.
 keywords = ["wfst", "fst"]
 
 [dependencies]
-rustc-serialize = "*"
-bincode = "*"
-rand = "*"
+rustc-serialize = "0.3.19"
+bincode = "0.6.0"
+rand = "0.3.14"
 
 [lib]
 name = "wfst"
