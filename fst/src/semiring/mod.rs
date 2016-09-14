@@ -1,10 +1,9 @@
-extern crate rustc_serialize;
-
 use std::fmt::Debug;
 use std::ops::{Add, Sub};
 use std::{f64, f32};
 use std::option::Option;
 
+pub mod test;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Code for abstracting floats

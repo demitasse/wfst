@@ -1,12 +1,11 @@
+extern crate rand;
+use rand::{SeedableRng, StdRng};
+
 use std::fmt::Debug;
 
-extern crate rand;
-extern crate semiring_test;
-extern crate semiring;
-
-use rand::{SeedableRng, StdRng};
-use semiring_test::{RandomWeight, RandomWeightGenerator};
-use semiring::*;
+extern crate fst;
+use fst::semiring::test::{RandomWeight, RandomWeightGenerator};
+use fst::semiring::*;
 
 extern crate rustc_serialize;
 use rustc_serialize::{Encodable, Decodable};

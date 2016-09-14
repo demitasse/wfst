@@ -1,10 +1,7 @@
-extern crate semiring;
-
-use std::vec::Vec;
-
-use semiring::Weight;
+use super::semiring::{Weight};
 use super::{ExpandedFst, MutableFst, StateId, Arc};
 
+use std::vec::Vec;
 
 /// Extends an Fst to a single final state.
 ///  

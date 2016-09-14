@@ -1,8 +1,7 @@
 extern crate rand;
-use rand::{Rng, StdRng};
+use self::rand::{Rng, StdRng};
 
-extern crate semiring;
-use semiring::*;
+use super::*;
 
 //////////////////////////DEFINE HOW DIFFERENT WEIGHTS CAN BE CREATED FROM U32
 pub trait RandomWeight: Weight {

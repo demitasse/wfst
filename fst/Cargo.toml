@@ -5,14 +5,21 @@ authors = ["Daniel van Niekerk <dvn.demitasse@gmail.com>"]
 
 [dependencies]
 rustc-serialize = "*"
-
-[dependencies.semiring]
-path = "../semiring"
+bincode = "*"
+rand = "*"
 
 [lib]
 name = "fst"
 path = "src/fst.rs"
 
 [[bin]]
-name = "main"
-path = "src/main.rs"
+name = "main_fst"
+path = "src/main_fst.rs"
+
+[[bin]]
+name = "main_semiring"
+path = "src/main_semiring.rs"
+
+[[bin]]
+name = "test_semiring"
+path = "src/test_semiring.rs"

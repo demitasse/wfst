@@ -1,7 +1,6 @@
-extern crate semiring;
 extern crate fst;
 
-use semiring::{TropicalWeight, Weight};
+use fst::semiring::{TropicalWeight, Weight};
 use fst::{Fst, MutableFst, ExpandedFst, Arc};
 use fst::fst_vec::{StdArc, VecFst};
 use fst::gen_algo;

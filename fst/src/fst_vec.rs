@@ -1,10 +1,8 @@
+use super::*;
+use super::semiring::Weight;
+
 use std::rc::Rc;
 use std::cell::RefCell;
-
-extern crate semiring;
-use semiring::*;
-
-use super::*;
 
 ////////// ARC
 #[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
