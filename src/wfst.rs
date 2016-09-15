@@ -44,19 +44,25 @@ pub type StateId = usize;
 pub trait Fst<W: Weight>: Debug {
     type Arc: Arc<W>;
     type Iter: Iterator<Item=Self::Arc>;
+    type Symtab: IntoIterator<Item=String>;
     fn get_start(&self) -> Option<StateId>;
     fn get_finalweight(&self, StateId) -> W;       //Weight is Copy
     fn arc_iter(&self, StateId) -> Self::Iter;
+    fn get_isyms(&self) -> Option<Self::Symtab>;
+    fn get_osyms(&self) -> Option<Self::Symtab>;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
 // interfaces):
 pub trait MutableFst<W: Weight>: Fst<W> {
+    fn new() -> Self;
     fn set_start(&mut self, id: StateId);
     fn add_state(&mut self, finalweight: W) -> StateId;
     fn del_state(&mut self, StateId);
     fn add_arc(&mut self, source: StateId, target: StateId, ilabel: Label, olabel: Label, weight: W);
     fn set_finalweight(&mut self, id: StateId, finalweight: W);
+    fn set_isyms<T: IntoIterator<Item=String>>(&mut self, symtab: T);
+    fn set_osyms<T: IntoIterator<Item=String>>(&mut self, symtab: T);
 }
 
 pub trait ExpandedFst<W: Weight>: Fst<W> {

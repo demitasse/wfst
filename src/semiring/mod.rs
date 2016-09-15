@@ -310,6 +310,7 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
         }
     }
 
+    #[allow(unused_variables)]
     fn divide(self, rhs: TropicalWeight<T>, divtype: Option<DivideType>) -> TropicalWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {
             TropicalWeight::new(None)
@@ -437,6 +438,7 @@ impl<T: Float<T>> Weight for LogWeight<T> {
         }
     }
 
+    #[allow(unused_variables)]
     fn divide(self, rhs: LogWeight<T>, divtype: Option<DivideType>) -> LogWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {
             LogWeight::new(None)
@@ -553,6 +555,7 @@ impl<T: Float<T>> Weight for MinmaxWeight<T> {
     }
 
     // Defined only for special cases
+    #[allow(unused_variables)]
     fn divide(self, rhs: MinmaxWeight<T>, divtype: Option<DivideType>) -> MinmaxWeight<T> {
         if (!self.is_member()) || (!rhs.is_member()) {
             MinmaxWeight::new(None)

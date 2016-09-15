@@ -40,7 +40,7 @@ fn main() {
         fst.add_state(TropicalWeight::new(Some(23.0)));
     }
 
-    //The followiing is a no-op since there are no arcs from s2
+    //The following is a no-op since there are no arcs from s2
     for a in fst.arc_iter(s2) {
         println!("Hello {:?}", a);
         fst.add_state(TropicalWeight::new(Some(23.0)));
@@ -63,6 +63,11 @@ fn main() {
     println!("");
     println!("{:?}", fst);    
     println!("");
-    println!("Number of states: {}", fst.get_numstates());    
+    println!("Number of states: {}", fst.get_numstates());
+    println!("==============================");
+    let revfst: VecFst<_> = algorithms::reverse(&mut fst);
+    println!("reverse()");
+    println!("");
+    println!("{:?}", revfst);    
 
 }

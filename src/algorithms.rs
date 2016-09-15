@@ -25,6 +25,8 @@
 //! This module implements the generic WFST algorithms. See the source
 //! files `main_wfst.rs` for simple examples of intended use.
 
+// TODO: We can still improve the implementations here to loosen the
+// type requirements, e.g. have `reverse` work for any input fst type.
 use super::semiring::{Weight};
 use super::{ExpandedFst, MutableFst, StateId, Arc};
 
@@ -73,4 +75,35 @@ pub fn unextendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F)
         }
     }
     fst.del_state(finalstate);
+}
+
+/// Reverses an `Fst`: If the input fst transduces string x to y with
+/// weight a, then the reverse transduces the reverse of x to the
+/// reverse of y with weight a.reverse().
+pub fn reverse<W: Weight, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (ifst: &mut F) -> O {
+    extendfinal(ifst);
+    //Swap symbol tables
+    let mut ofst = O::new();
+    if let Some(osyms) = ifst.get_osyms() {
+        ofst.set_isyms(osyms);
+    }
+    if let Some(isyms) = ifst.get_isyms() {
+        ofst.set_osyms(isyms);
+    }
+    //Set start/end states
+    for i in 0..ifst.get_numstates() {
+        ofst.add_state(W::zero());
+        if !ifst.get_finalweight(i).eq(W::zero()) {
+            ofst.set_start(i);
+        }
+    }
+    ofst.set_finalweight(ifst.get_start().unwrap(), W::one());
+    //Create reversed arcs
+    for i in 0..ifst.get_numstates() {
+        for arc in ifst.arc_iter(i) {
+            ofst.add_arc(arc.nextstate(), i, arc.ilabel(), arc.olabel(), arc.weight().reverse())
+        }
+    }    
+    unextendfinal(ifst);
+    ofst
 }

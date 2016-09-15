@@ -123,6 +123,7 @@ impl<W: Weight> VecFst<W> {
 impl<W: Weight> Fst<W> for VecFst<W> {
     type Arc = Rc<RefCell<StdArc<W>>>;
     type Iter = VecArcIterator<W>;
+    type Symtab = Vec<String>;
 
     fn get_start(&self) -> Option<StateId> {
         self.startstate
@@ -136,9 +137,21 @@ impl<W: Weight> Fst<W> for VecFst<W> {
         VecArcIterator { state: self.states[id].clone(),
                          arcindex: 0 }
     }
+
+    fn get_isyms(&self) -> Option<Self::Symtab> {
+        self.isyms.clone()
+    }
+
+    fn get_osyms(&self) -> Option<Self::Symtab> {
+        self.osyms.clone()
+    }
 }
 
 impl<W: Weight> MutableFst<W> for VecFst<W> {  
+    fn new() -> Self {
+        VecFst::new()
+    }
+
     fn set_start(&mut self, id: StateId) {
         assert!(id < self.states.len());
         self.startstate = Some(id);
@@ -180,6 +193,22 @@ impl<W: Weight> MutableFst<W> for VecFst<W> {
     fn set_finalweight(&mut self, id: StateId, finalweight: W) {
         assert!(id < self.states.len());
         self.states[id].borrow_mut().finalweight = finalweight;
+    }
+
+    fn set_isyms<T: IntoIterator<Item=String>>(&mut self, symtab: T) {
+        let mut v = Vec::new();
+        for s in symtab {
+            v.push(s)
+        }
+        self.isyms = Some(v)
+    }
+
+    fn set_osyms<T: IntoIterator<Item=String>>(&mut self, symtab: T) {
+        let mut v = Vec::new();
+        for s in symtab {
+            v.push(s)
+        }
+        self.osyms = Some(v)
     }
 }
 
