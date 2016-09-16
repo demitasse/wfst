@@ -32,6 +32,8 @@
 //! numbers. See the source files `main_semiring.rs` and
 //! `test_semiring.rs` for simple examples of intended use.
 
+use std::cmp::Ordering;
+
 use super::*;
 use super::float::Float;
 
@@ -143,6 +145,28 @@ impl<T: Float<T>> PartialEq for TropicalWeight<T> {
         } else {
             false
         }        
+    }
+}
+impl<T: Float<T>> Eq for TropicalWeight<T> {}
+
+// See Mehryar Mohri, "Semiring Framework and Algorithms for
+// Shortest-Distance Problems", Journal of Automata, Languages and
+// Combinatorics 7(3):321-350, 2002.
+impl<T: Float<T>> Ord for TropicalWeight<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.eq(other) {
+            Ordering::Equal
+        } else if self.plus(other).eq(other) {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
+    }
+}
+
+impl<T: Float<T>> PartialOrd for TropicalWeight<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -278,6 +302,28 @@ impl<T: Float<T>> PartialEq for LogWeight<T> {
         }        
     }
 }
+impl<T: Float<T>> Eq for LogWeight<T> {}
+
+// See Mehryar Mohri, "Semiring Framework and Algorithms for
+// Shortest-Distance Problems", Journal of Automata, Languages and
+// Combinatorics 7(3):321-350, 2002.
+impl<T: Float<T>> Ord for LogWeight<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.eq(other) {
+            Ordering::Equal
+        } else if self.plus(other).eq(other) {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
+    }
+}
+
+impl<T: Float<T>> PartialOrd for LogWeight<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 impl<T: Float<T>> LeftSemiring for LogWeight<T> {}
 impl<T: Float<T>> RightSemiring for LogWeight<T> {}
@@ -391,6 +437,28 @@ impl<T: Float<T>> PartialEq for MinmaxWeight<T> {
         } else {
             false
         }
+    }
+}
+impl<T: Float<T>> Eq for MinmaxWeight<T> {}
+
+// See Mehryar Mohri, "Semiring Framework and Algorithms for
+// Shortest-Distance Problems", Journal of Automata, Languages and
+// Combinatorics 7(3):321-350, 2002.
+impl<T: Float<T>> Ord for MinmaxWeight<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.eq(other) {
+            Ordering::Equal
+        } else if self.plus(other).eq(other) {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
+    }
+}
+
+impl<T: Float<T>> PartialOrd for MinmaxWeight<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

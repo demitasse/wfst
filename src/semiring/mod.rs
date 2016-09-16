@@ -10,11 +10,15 @@
 //! semiring and other properties. See the source files
 //! `main_semiring.rs` and `test_semiring.rs` for simple examples of
 //! intended use.
+//!
+//! See Mehryar Mohri, "Semiring Framework and Algorithms for
+//! Shortest-Distance Problems", *Journal of Automata, Languages and
+//! Combinatorics* 7(3):321-350, 2002.
 
 use std::fmt::Debug;
 use std::option::Option;
 
-pub trait Weight: PartialEq + Clone + Debug {
+pub trait Weight: Ord + Clone + Debug {
     fn is_member(&self) -> bool;
     fn plus(&self, rhs: &Self) -> Self;
     fn times(&self, rhs: &Self) -> Self;
@@ -56,21 +60,6 @@ pub fn power<T: Weight>(w: &T, n: u8) -> T {
         result = result.times(w);
     }
     result
-}
-
-// NATURAL ORDER
-// By definition:
-//                 a <= b iff a + b = a
-// The natural order is a negative partial order iff the semiring is
-// idempotent. It is trivially monotonic for plus. It is left
-// (resp. right) monotonic for times iff the semiring is left
-// (resp. right) distributive. It is a total order iff the semiring
-// has the path property. See Mohri, "Semiring Framework and
-// Algorithms for Shortest-Distance Problems", Journal of Automata,
-// Languages and Combinatorics 7(3):321-350, 2002. We define the
-// strict version of this order below.
-pub fn le<T: Weight + Idempotent>(w1: &T, w2: &T) -> bool {
-    w1.plus(w2).eq(w1) && !w1.eq(w2)
 }
 
 mod float;

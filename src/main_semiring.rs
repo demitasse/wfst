@@ -9,7 +9,9 @@
 extern crate wfst;
 
 use wfst::semiring::Weight;
-use wfst::semiring::floatweight::TropicalWeight;
+use wfst::semiring::floatweight::{TropicalWeight, LogWeight};
+
+use std::collections::BinaryHeap;
 
 fn main() {
     {
@@ -25,5 +27,20 @@ fn main() {
     println!("{}", tt.is_member());
     println!("{:?} ⊕ {:?} = {:?}", t, tt, t.plus(&tt)); 
     println!("{:?} ⊗ {:?} = {:?}", t, tt, t.times(&tt));
-    println!("{:?}", t.times(&tt).divide(&tt, None)); 
+    println!("{:?}", t.times(&tt).divide(&tt, None));
+
+    //Demit TODO: Double-check ordering trait implementations
+    let mut heap = BinaryHeap::new();
+    heap.push(LogWeight::<f32>::zero());
+    heap.push(LogWeight::one());
+    heap.push(LogWeight::new(Some(-12.43)));
+    heap.push(LogWeight::new(Some(-431234.432)));
+    heap.push(LogWeight::new(Some(234.123)));
+    heap.push(LogWeight::new(Some(444444.0)));
+
+    println!("{:?}", heap);
+
+    while let Some(w) = heap.pop() {
+        println!("{:?}", w);
+    }
 }
