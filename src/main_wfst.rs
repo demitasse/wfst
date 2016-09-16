@@ -8,7 +8,8 @@
 
 extern crate wfst;
 
-use wfst::semiring::{TropicalWeight, Weight};
+use wfst::semiring::Weight;
+use wfst::semiring::floatweight::TropicalWeight;
 use wfst::{Fst, MutableFst, ExpandedFst, Arc};
 use wfst::wfst_vec::{StdArc, VecFst};
 use wfst::algorithms;

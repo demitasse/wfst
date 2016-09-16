@@ -15,6 +15,8 @@ extern crate rand;
 use self::rand::{Rng, StdRng};
 
 use super::*;
+use super::float::Float;
+use super::floatweight::{TropicalWeight, LogWeight, MinmaxWeight};
 
 //////////////////////////DEFINE HOW DIFFERENT WEIGHTS CAN BE CREATED FROM U32
 pub trait RandomWeight: Weight {

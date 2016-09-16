@@ -35,6 +35,7 @@ use std::fmt::Debug;
 extern crate wfst;
 use wfst::semiring::test::{RandomWeight, RandomWeightGenerator};
 use wfst::semiring::*;
+use wfst::semiring::floatweight::*;
 
 extern crate rustc_serialize;
 use rustc_serialize::{Encodable, Decodable};

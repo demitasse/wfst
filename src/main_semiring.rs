@@ -9,7 +9,7 @@
 extern crate wfst;
 
 use wfst::semiring::Weight;
-use wfst::semiring::TropicalWeight;
+use wfst::semiring::floatweight::TropicalWeight;
 
 fn main() {
     {
