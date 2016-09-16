@@ -43,7 +43,7 @@ impl<W: Weight> Arc<W> for StdArc<W> {
         self.olabel
     }
     fn weight(&self) -> W {
-        self.weight
+        self.weight.clone()
     }
     fn nextstate(&self) -> StateId {
         self.nextstate
@@ -130,7 +130,7 @@ impl<W: Weight> Fst<W> for VecFst<W> {
     }
 
     fn get_finalweight(&self, id: StateId) -> W {
-        self.states[id].borrow().finalweight
+        self.states[id].borrow().finalweight.clone()
     }
 
     fn arc_iter(&self, id: StateId) -> Self::Iter {

@@ -46,7 +46,7 @@ pub mod test;
 const DEFAULT_DELTA: f32 = 1.0 / 1024.0;
 
 // Internal float trait for our implementations over either f32 or f64
-pub trait Float<T>: Debug + Copy + PartialOrd + Add<Output=T> + Sub<Output=T> {
+pub trait Float<T>: Debug + Clone + PartialOrd + Add<Output=T> + Sub<Output=T> {
     fn zero() -> T;
     fn one() -> T;
     fn nan() -> T;
@@ -60,25 +60,11 @@ pub trait Float<T>: Debug + Copy + PartialOrd + Add<Output=T> + Sub<Output=T> {
 }
 
 impl Float<f64> for f64 {
-    fn zero() -> f64 {
-        0.0
-    }
-
-    fn one() -> f64 {
-        1.0
-    }
-
-    fn nan() -> f64 {
-        f64::NAN
-    }
-
-    fn infty() -> f64 {
-        f64::INFINITY
-    }
-
-    fn neg_infty() -> f64 {
-        f64::NEG_INFINITY
-    }
+    fn zero() -> f64 { 0.0 }
+    fn one() -> f64 { 1.0 }
+    fn nan() -> f64 { f64::NAN }
+    fn infty() -> f64 { f64::INFINITY }
+    fn neg_infty() -> f64 { f64::NEG_INFINITY }
 
     fn logexp(self) -> f64 {
         (1.0 + (-self).exp()).ln()
@@ -119,25 +105,11 @@ impl Float<f64> for f64 {
 }
 
 impl Float<f32> for f32 {
-    fn zero() -> f32 {
-        0.0
-    }
-
-    fn one() -> f32 {
-        1.0
-    }
-
-    fn nan() -> f32 {
-        f32::NAN
-    }
-
-    fn infty() -> f32 {
-        f32::INFINITY
-    }
-
-    fn neg_infty() -> f32 {
-        f32::NEG_INFINITY
-    }
+    fn zero() -> f32 { 0.0 }
+    fn one() -> f32 { 1.0 }
+    fn nan() -> f32 { f32::NAN }
+    fn infty() -> f32 { f32::INFINITY }
+    fn neg_infty() -> f32 { f32::NEG_INFINITY }
 
     fn logexp(self) -> f32 {
         (1.0 + (-self).exp()).ln()
@@ -178,27 +150,18 @@ impl Float<f32> for f32 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-pub const LEFT_SEMIRING: u64 = 0x01; // FORALL a,b,c: Times(c, Plus(a,b)) = Plus(Times(c,a), Times(c, b))
-pub const RIGHT_SEMIRING: u64 = 0x02; // FORALL a,b,c: Times(Plus(a,b), c) = Plus(Times(a,c), Times(b, c))
-pub const SEMIRING: u64 = LEFT_SEMIRING | RIGHT_SEMIRING;
-pub const COMMUTATIVE: u64 = 0x04; // FORALL a,b: Times(a,b) = Times(b,a)
-pub const IDEMPOTENT: u64 = 0x08; // FORALL a: Plus(a, a) = a
-pub const PATH: u64 = 0x10; // FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
 
-// Define Weight (demit: may want to rethink having this `Copy`)
-pub trait Weight: Copy + Debug {
+pub trait Weight: PartialEq + Clone + Debug {
     fn is_member(&self) -> bool;
-    fn plus(self, rhs: Self) -> Self;
-    fn times(self, rhs: Self) -> Self;
+    fn plus(&self, rhs: &Self) -> Self;
+    fn times(&self, rhs: &Self) -> Self;
     fn zero() -> Self;
     fn one() -> Self;
     fn none() -> Self;
-    fn eq(self, rhs: Self) -> bool;
-    fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool;
-    fn quantize(self, delta: Option<f32>) -> Self;
-    fn divide(self, rhs: Self, divtype: Option<DivideType>) -> Self;
-    fn reverse(self) -> Self;
-    fn properties() -> u64;
+    fn approx_eq(&self, rhs: &Self, delta: Option<f32>) -> bool;
+    fn quantize(&self, delta: Option<f32>) -> Self;
+    fn divide(&self, rhs: &Self, divtype: Option<DivideType>) -> Self;
+    fn reverse(&self) -> Self;
     fn wtype() -> String;
 }
 
@@ -208,7 +171,22 @@ pub enum DivideType {
     Divany
 }
 
-pub fn power<T: Weight>(w: T, n: u8) -> T {
+/// FORALL a,b,c: Times(c, Plus(a,b)) = Plus(Times(c,a), Times(c, b))
+pub trait LeftSemiring {}
+/// FORALL a,b,c: Times(Plus(a,b), c) = Plus(Times(a,c), Times(b, c))
+pub trait RightSemiring {}
+pub trait Semiring: LeftSemiring + RightSemiring {}
+/// FORALL a,b: Times(a,b) = Times(b,a)
+pub trait Commutative {}
+// FORALL a: Plus(a, a) = a
+pub trait Idempotent {}
+// FORALL a,b: Plus(a,b) = a or Plus(a,b) = b
+pub trait Path {}
+
+// Power is the iterated product for arbitrary semirings such that
+// Power(w, 0) is One() for the semiring, and
+// Power(w, n) = Times(Power(w, n-1), w)
+pub fn power<T: Weight>(w: &T, n: u8) -> T {
     let mut result = T::one();
     for _ in 0..n {
         result = result.times(w);
@@ -216,83 +194,80 @@ pub fn power<T: Weight>(w: T, n: u8) -> T {
     result
 }
 
+// NATURAL ORDER
+// By definition:
+//                 a <= b iff a + b = a
+// The natural order is a negative partial order iff the semiring is
+// idempotent. It is trivially monotonic for plus. It is left
+// (resp. right) monotonic for times iff the semiring is left
+// (resp. right) distributive. It is a total order iff the semiring
+// has the path property. See Mohri, "Semiring Framework and
+// Algorithms for Shortest-Distance Problems", Journal of Automata,
+// Languages and Combinatorics 7(3):321-350, 2002. We define the
+// strict version of this order below.
+pub fn le<T: Weight + Idempotent>(w1: &T, w2: &T) -> bool {
+    w1.plus(w2).eq(w1) && !w1.eq(w2)
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
-// Weight and thus also semiring implementations
-
-// We give most of these structs "Copy semantics", i.e. it will be
-// copied instead of "moved". We may want to revisit this decision,
-// but in the meantime this is more in line with the behaviour of
-// numeric types.
-
+// Weight and semiring implementations
 ////////////////////////////////////////////////////////////////////////////////
 //TROPICAL SEMIRING: (min, +, inf, 0)
-#[derive(Copy, Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
 pub struct TropicalWeight<T: Float<T>> {
     val: Option<T>
 }
 
 impl<T: Float<T>> TropicalWeight<T> {
-    pub fn new(val: Option<T>) -> TropicalWeight<T> {
+    pub fn new(val: Option<T>) -> Self {
         TropicalWeight {val: val}
     }
 }
 
 impl<T: Float<T>> Weight for TropicalWeight<T> {
-
-    fn plus(self, rhs: TropicalWeight<T>) -> TropicalWeight<T> {
+    fn plus(&self, rhs: &Self) -> Self {
         if (!self.is_member()) || (!rhs.is_member()) {
-            TropicalWeight::new(None)
+            Self::new(None)
         } else if self.val < rhs.val {
-            self   //because TropicalWeight is Copy
+            self.clone()
         } else {
-            rhs    //because TropicalWeight is Copy
+            rhs.clone()
         }        
     }
 
-    fn times(self, rhs: TropicalWeight<T>) -> TropicalWeight<T> {
+    fn times(&self, rhs: &Self) -> Self {
         if (!self.is_member()) || (!rhs.is_member()) {
-            TropicalWeight::new(None)
+            Self::new(None)
         } else {
-            let (v1, v2) = (self.val.unwrap(), rhs.val.unwrap());
-            TropicalWeight::new(Some(v1 + v2))
+            let (v1, v2) = (self.val.clone().unwrap(), rhs.val.clone().unwrap());
+            Self::new(Some(v1 + v2))
         }
     }
 
-    fn zero() -> TropicalWeight<T> {
-        TropicalWeight::new(Some(T::infty()))
+    fn zero() -> Self {
+        Self::new(Some(T::infty()))
     }
 
-    fn one() -> TropicalWeight<T> {
-        TropicalWeight::new(Some(T::zero()))
+    fn one() -> Self {
+        Self::new(Some(T::zero()))
     }
 
-    fn none() -> TropicalWeight<T> {
-        TropicalWeight::new(None)
+    fn none() -> Self {
+        Self::new(None)
     }
 
     fn is_member(&self) -> bool {
-        if let Some(val) = self.val {
+        if let Some(val) = self.val.clone() {
             !(val == T::nan() || val == T::neg_infty())
         } else {
             false
         }
     }
 
-    fn eq(self, rhs: Self) -> bool {
-        if let Some(val) = self.val {
-            if let Some(val2) = rhs.val {
-                val == val2
-            } else {
-                false
-            }
-        } else {
-            false
-        }        
-    }
-
-    fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool {
-        if let Some(val) = self.val {
-            if let Some(val2) = rhs.val {
+    fn approx_eq(&self, rhs: &Self, delta: Option<f32>) -> bool {
+        if let Some(val) = self.val.clone() {
+            if let Some(val2) = rhs.val.clone() {
                 val.approx_eq(val2, delta)
             } else {
                 false
@@ -302,36 +277,32 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
         }        
     }
 
-    fn quantize(self, delta: Option<f32>) -> TropicalWeight<T> {
-        if let Some(val) = self.val {
-            TropicalWeight::new(Some(val.quantize(delta)))    
+    fn quantize(&self, delta: Option<f32>) -> Self {
+        if let Some(val) = self.val.clone() {
+            Self::new(Some(val.quantize(delta)))    
         } else {
-            TropicalWeight::new(None)
+            Self::new(None)
         }
     }
 
     #[allow(unused_variables)]
-    fn divide(self, rhs: TropicalWeight<T>, divtype: Option<DivideType>) -> TropicalWeight<T> {
+    fn divide(&self, rhs: &Self, divtype: Option<DivideType>) -> Self {
         if (!self.is_member()) || (!rhs.is_member()) {
-            TropicalWeight::new(None)
+            Self::new(None)
         } else {
-            let (v1, v2) = (self.val.unwrap(), rhs.val.unwrap());
+            let (v1, v2) = (self.val.clone().unwrap(), rhs.val.clone().unwrap());
             if v2 == T::infty() {
-                TropicalWeight::new(None)
+                Self::new(None)
             } else if v1 == T::infty() {
-                self   //because TropicalWeight is Copy
+                self.clone()
             } else {
-                TropicalWeight::new(Some(v1 - v2))
+                Self::new(Some(v1 - v2))
             }
         }
     }
 
-    fn reverse(self) -> TropicalWeight<T> {
-        self
-    }
-
-    fn properties() -> u64 {
-        SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH
+    fn reverse(&self) -> Self {
+        self.clone()
     }
 
     fn wtype() -> String {
@@ -339,76 +310,10 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//LOG SEMIRING: (log(e^-x + e^y), +, inf, 0)
-#[derive(Copy, Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
-pub struct LogWeight<T: Float<T>> {
-    val: Option<T>
-}
-
-impl<T: Float<T>> LogWeight<T> {
-    pub fn new(val: Option<T>) -> LogWeight<T> {
-        LogWeight {val: val}
-    }
-}
-
-impl<T: Float<T>> Weight for LogWeight<T> {
-
-    fn plus(self, rhs: LogWeight<T>) -> LogWeight<T> {
-        if (!self.is_member()) || (!rhs.is_member()) {
-            LogWeight::new(None)
-        } else {
-            let (v1, v2) = (self.val.unwrap(), rhs.val.unwrap());
-            if v1 == T::infty() {
-                rhs   //because LogWeight is Copy
-            } else if v2 == T::infty() {
-                self  //because LogWeight is Copy
-            } else if v1 > v2 {
-                LogWeight::new(Some(v2 - (v1 - v2).logexp()))
-            } else {
-                LogWeight::new(Some(v1 - (v2 - v1).logexp()))
-            }
-        }
-    }
-
-    fn times(self, rhs: LogWeight<T>) -> LogWeight<T> {
-        if (!self.is_member()) || (!rhs.is_member()) {
-            LogWeight::new(None)
-        } else {
-            let (v1, v2) = (self.val.unwrap(), rhs.val.unwrap());
-            if v1 == T::infty() {
-                self   //because LogWeight is Copy
-            } else if v2 == T::infty() {
-                rhs    //because LogWeight is Copy
-            } else {
-                LogWeight::new(Some(v1 + v2))
-            }
-        }
-    }
-
-    fn zero() -> LogWeight<T> {
-        LogWeight::new(Some(T::infty()))
-    }
-
-    fn one() -> LogWeight<T> {
-        LogWeight::new(Some(T::zero()))
-    }
-
-    fn none() -> LogWeight<T> {
-        LogWeight::new(None)
-    }
-
-    fn is_member(&self) -> bool {
-        if let Some(val) = self.val {
-            !(val == T::nan() || val == T::neg_infty())
-        } else {
-            false
-        }
-    }
-
-    fn eq(self, rhs: Self) -> bool {
-        if let Some(val) = self.val {
-            if let Some(val2) = rhs.val {
+impl<T: Float<T>> PartialEq for TropicalWeight<T> {
+    fn eq(&self, rhs: &Self) -> bool {
+        if let Some(val) = self.val.clone() {
+            if let Some(val2) = rhs.val.clone() {
                 val == val2
             } else {
                 false
@@ -417,10 +322,85 @@ impl<T: Float<T>> Weight for LogWeight<T> {
             false
         }        
     }
+}
 
-    fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool {
-        if let Some(val) = self.val {
-            if let Some(val2) = rhs.val {
+impl<T: Float<T>> LeftSemiring for TropicalWeight<T> {}
+impl<T: Float<T>> RightSemiring for TropicalWeight<T> {}
+impl<T: Float<T>> Semiring for TropicalWeight<T> {}
+impl<T: Float<T>> Commutative for TropicalWeight<T> {}
+impl<T: Float<T>> Idempotent for TropicalWeight<T> {}
+impl<T: Float<T>> Path for TropicalWeight<T> {}
+
+////////////////////////////////////////////////////////////////////////////////
+//LOG SEMIRING: (log(e^-x + e^y), +, inf, 0)
+#[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
+pub struct LogWeight<T: Float<T>> {
+    val: Option<T>
+}
+
+impl<T: Float<T>> LogWeight<T> {
+    pub fn new(val: Option<T>) -> Self {
+        LogWeight {val: val}
+    }
+}
+
+impl<T: Float<T>> Weight for LogWeight<T> {
+
+    fn plus(&self, rhs: &Self) -> Self {
+        if (!self.is_member()) || (!rhs.is_member()) {
+            Self::new(None)
+        } else {
+            let (v1, v2) = (self.val.clone().unwrap(), rhs.val.clone().unwrap());
+            if v1 == T::infty() {
+                rhs.clone()
+            } else if v2 == T::infty() {
+                self.clone()
+            } else if v1 > v2 {
+                Self::new(Some(v2.clone() - (v1 - v2).logexp()))
+            } else {
+                Self::new(Some(v1.clone() - (v2 - v1).logexp()))
+            }
+        }
+    }
+
+    fn times(&self, rhs: &Self) -> Self {
+        if (!self.is_member()) || (!rhs.is_member()) {
+            Self::new(None)
+        } else {
+            let (v1, v2) = (self.val.clone().unwrap(), rhs.val.clone().unwrap());
+            if v1 == T::infty() {
+                self.clone()
+            } else if v2 == T::infty() {
+                rhs.clone()
+            } else {
+                Self::new(Some(v1 + v2))
+            }
+        }
+    }
+
+    fn zero() -> Self {
+        Self::new(Some(T::infty()))
+    }
+
+    fn one() -> Self {
+        Self::new(Some(T::zero()))
+    }
+
+    fn none() -> Self {
+        Self::new(None)
+    }
+
+    fn is_member(&self) -> bool {
+        if let Some(val) = self.val.clone() {
+            !(val == T::nan() || val == T::neg_infty())
+        } else {
+            false
+        }
+    }
+
+    fn approx_eq(&self, rhs: &Self, delta: Option<f32>) -> bool {
+        if let Some(val) = self.val.clone() {
+            if let Some(val2) = rhs.val.clone() {
                 val.approx_eq(val2, delta)
             } else {
                 false
@@ -430,36 +410,32 @@ impl<T: Float<T>> Weight for LogWeight<T> {
         }        
     }
 
-    fn quantize(self, delta: Option<f32>) -> LogWeight<T> {
-        if let Some(val) = self.val {
-            LogWeight::new(Some(val.quantize(delta)))    
+    fn quantize(&self, delta: Option<f32>) -> Self {
+        if let Some(val) = self.val.clone() {
+            Self::new(Some(val.quantize(delta)))    
         } else {
-            LogWeight::new(None)
+            Self::new(None)
         }
     }
 
     #[allow(unused_variables)]
-    fn divide(self, rhs: LogWeight<T>, divtype: Option<DivideType>) -> LogWeight<T> {
+    fn divide(&self, rhs: &Self, divtype: Option<DivideType>) -> Self {
         if (!self.is_member()) || (!rhs.is_member()) {
-            LogWeight::new(None)
+            Self::new(None)
         } else {
-            let (v1, v2) = (self.val.unwrap(), rhs.val.unwrap());
+            let (v1, v2) = (self.val.clone().unwrap(), rhs.val.clone().unwrap());
             if v2 == T::infty() {
-                LogWeight::new(None)
+                Self::new(None)
             } else if v1 == T::infty() {
-                self   //because LogWeight is Copy
+                self.clone()
             } else {
-                LogWeight::new(Some(v1 - v2))
+                Self::new(Some(v1 - v2))
             }
         }
     }
 
-    fn reverse(self) -> LogWeight<T> {
-        self
-    }
-
-    fn properties() -> u64 {
-        SEMIRING | COMMUTATIVE
+    fn reverse(&self) -> Self {
+        self.clone()
     }
 
     fn wtype() -> String {
@@ -467,64 +443,10 @@ impl<T: Float<T>> Weight for LogWeight<T> {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//MINMAX SEMIRING: (min, max, inf, -inf)
-#[derive(Copy, Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
-pub struct MinmaxWeight<T: Float<T>> {
-    val: Option<T>
-}
-
-impl<T: Float<T>> MinmaxWeight<T> {
-    pub fn new(val: Option<T>) -> MinmaxWeight<T> {
-        MinmaxWeight {val: val}
-    }
-}
-
-impl<T: Float<T>> Weight for MinmaxWeight<T> {
-
-    fn plus(self, rhs: MinmaxWeight<T>) -> MinmaxWeight<T> {
-        if (!self.is_member()) || (!rhs.is_member()) {
-            MinmaxWeight::new(None)
-        } else if self.val < rhs.val {
-            self   //because MinmaxWeight is Copy
-        } else {
-            rhs    //because MinmaxWeight is Copy
-        }        
-    }
-
-    fn times(self, rhs: MinmaxWeight<T>) -> MinmaxWeight<T> {
-        if (!self.is_member()) || (!rhs.is_member()) {
-            MinmaxWeight::new(None)
-        } else if self.val >= rhs.val {
-            self   //because MinmaxWeight is Copy
-        } else {
-            rhs    //because MinmaxWeight is Copy
-        }        
-    }
-
-    fn zero() -> MinmaxWeight<T> {
-        MinmaxWeight::new(Some(T::infty()))
-    }
-
-    fn one() -> MinmaxWeight<T> {
-        MinmaxWeight::new(Some(T::neg_infty()))
-    }
-
-    fn none() -> MinmaxWeight<T> {
-        MinmaxWeight::new(None)
-    }
-
-    fn is_member(&self) -> bool {
-        if let Some(val) = self.val {
-            !(val == T::nan())
-        } else {
-            false
-        }
-    }
-
-    fn eq(self, rhs: Self) -> bool {
-        if let Some(val) = self.val {
-            if let Some(val2) = rhs.val {
+impl<T: Float<T>> PartialEq for LogWeight<T> {
+    fn eq(&self, rhs: &Self) -> bool {
+        if let Some(val) = self.val.clone() {
+            if let Some(val2) = rhs.val.clone() {
                 val == val2
             } else {
                 false
@@ -533,10 +455,71 @@ impl<T: Float<T>> Weight for MinmaxWeight<T> {
             false
         }        
     }
+}
 
-    fn approx_eq(self, rhs: Self, delta: Option<f32>) -> bool {
-        if let Some(val) = self.val {
-            if let Some(val2) = rhs.val {
+impl<T: Float<T>> LeftSemiring for LogWeight<T> {}
+impl<T: Float<T>> RightSemiring for LogWeight<T> {}
+impl<T: Float<T>> Semiring for LogWeight<T> {}
+impl<T: Float<T>> Commutative for LogWeight<T> {}
+
+////////////////////////////////////////////////////////////////////////////////
+//MINMAX SEMIRING: (min, max, inf, -inf)
+#[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
+pub struct MinmaxWeight<T: Float<T>> {
+    val: Option<T>
+}
+
+impl<T: Float<T>> MinmaxWeight<T> {
+    pub fn new(val: Option<T>) -> Self {
+        MinmaxWeight {val: val}
+    }
+}
+
+impl<T: Float<T>> Weight for MinmaxWeight<T> {
+
+    fn plus(&self, rhs: &Self) -> Self {
+        if (!self.is_member()) || (!rhs.is_member()) {
+            Self::new(None)
+        } else if self.val < rhs.val {
+            self.clone()
+        } else {
+            rhs.clone()
+        }        
+    }
+
+    fn times(&self, rhs: &Self) -> Self {
+        if (!self.is_member()) || (!rhs.is_member()) {
+            Self::new(None)
+        } else if self.val >= rhs.val {
+            self.clone()
+        } else {
+            rhs.clone()
+        }        
+    }
+
+    fn zero() -> Self {
+        Self::new(Some(T::infty()))
+    }
+
+    fn one() -> Self {
+        Self::new(Some(T::neg_infty()))
+    }
+
+    fn none() -> Self {
+        Self::new(None)
+    }
+
+    fn is_member(&self) -> bool {
+        if let Some(val) = self.val.clone() {
+            !(val == T::nan())
+        } else {
+            false
+        }
+    }
+
+    fn approx_eq(&self, rhs: &Self, delta: Option<f32>) -> bool {
+        if let Some(val) = self.val.clone() {
+            if let Some(val2) = rhs.val.clone() {
                 val.approx_eq(val2, delta)
             } else {
                 false
@@ -546,35 +529,52 @@ impl<T: Float<T>> Weight for MinmaxWeight<T> {
         }        
     }
 
-    fn quantize(self, delta: Option<f32>) -> MinmaxWeight<T> {
-        if let Some(val) = self.val {
-            MinmaxWeight::new(Some(val.quantize(delta)))    
+    fn quantize(&self, delta: Option<f32>) -> Self {
+        if let Some(val) = self.val.clone() {
+            Self::new(Some(val.quantize(delta)))    
         } else {
-            MinmaxWeight::new(None)
+            Self::new(None)
         }
     }
 
     // Defined only for special cases
     #[allow(unused_variables)]
-    fn divide(self, rhs: MinmaxWeight<T>, divtype: Option<DivideType>) -> MinmaxWeight<T> {
+    fn divide(&self, rhs: &Self, divtype: Option<DivideType>) -> Self {
         if (!self.is_member()) || (!rhs.is_member()) {
-            MinmaxWeight::new(None)
+            Self::new(None)
         } else if self.val >= rhs.val {
-            self   //because MinmaxWeight is Copy
+            self.clone()
         } else {
-            MinmaxWeight::new(None)
+            Self::new(None)
         }
     }
 
-    fn reverse(self) -> MinmaxWeight<T> {
-        self
-    }
-
-    fn properties() -> u64 {
-        SEMIRING | COMMUTATIVE | IDEMPOTENT | PATH        
+    fn reverse(&self) -> Self {
+        self.clone()
     }
 
     fn wtype() -> String {
         format!("minmax{}", T::get_precision())
     }
 }
+
+impl<T: Float<T>> PartialEq for MinmaxWeight<T> {
+    fn eq(&self, rhs: &Self) -> bool {
+        if let Some(val) = self.val.clone() {
+            if let Some(val2) = rhs.val.clone() {
+                val == val2
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+}
+
+impl<T: Float<T>> LeftSemiring for MinmaxWeight<T> {}
+impl<T: Float<T>> RightSemiring for MinmaxWeight<T> {}
+impl<T: Float<T>> Semiring for MinmaxWeight<T> {}
+impl<T: Float<T>> Commutative for MinmaxWeight<T> {}
+impl<T: Float<T>> Idempotent for MinmaxWeight<T> {}
+impl<T: Float<T>> Path for MinmaxWeight<T> {}

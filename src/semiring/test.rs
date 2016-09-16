@@ -22,20 +22,20 @@ pub trait RandomWeight: Weight {
 }
 
 impl<T: Float<T>> RandomWeight for TropicalWeight<T> {
-    fn from_u32(n: u32) -> TropicalWeight<T> {
-        TropicalWeight::new(Some(T::from_u32(n)))
+    fn from_u32(n: u32) -> Self {
+        Self::new(Some(T::from_u32(n)))
     }
 }
 
 impl<T: Float<T>> RandomWeight for LogWeight<T> {
-    fn from_u32(n: u32) -> LogWeight<T> {
-        LogWeight::new(Some(T::from_u32(n)))
+    fn from_u32(n: u32) -> Self {
+        Self::new(Some(T::from_u32(n)))
     }
 }
 
 impl<T: Float<T>> RandomWeight for MinmaxWeight<T> {
-    fn from_u32(n: u32) -> MinmaxWeight<T> {
-        MinmaxWeight::new(Some(T::from_u32(n)))
+    fn from_u32(n: u32) -> Self {
+        Self::new(Some(T::from_u32(n)))
     }
 }
 
