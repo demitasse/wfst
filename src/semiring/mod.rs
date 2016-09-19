@@ -18,7 +18,7 @@
 use std::fmt::Debug;
 use std::option::Option;
 
-pub trait Weight: Ord + Clone + Debug {
+pub trait Weight: PartialEq + Clone + Debug {
     fn is_member(&self) -> bool;
     fn plus(&self, rhs: &Self) -> Self;
     fn times(&self, rhs: &Self) -> Self;
@@ -61,6 +61,7 @@ pub fn power<T: Weight>(w: &T, n: u8) -> T {
     }
     result
 }
+
 
 mod float;
 pub mod test;
