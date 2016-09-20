@@ -7,9 +7,9 @@
 // of this file.
 
 extern crate wfst;
-
 use wfst::semiring::Weight;
 use wfst::semiring::floatweight::{TropicalWeight};
+use wfst::utils::RevOrd;
 
 use std::collections::BinaryHeap;
 
@@ -31,27 +31,27 @@ fn main() {
     println!("==============================");
 
     let mut heap = BinaryHeap::new();
-    heap.push(TropicalWeight::<f32>::zero());
-    heap.push(TropicalWeight::new(Some( 11.0         )));
-    heap.push(TropicalWeight::new(Some( 10.0         )));
-    heap.push(TropicalWeight::new(Some( 9.0          )));
-    heap.push(TropicalWeight::new(Some( 8.0          )));
-    heap.push(TropicalWeight::new(Some( 7.0          )));
-    heap.push(TropicalWeight::new(Some( 6.0          )));
-    heap.push(TropicalWeight::new(Some( 5.0          )));
-    heap.push(TropicalWeight::new(Some( 4.0          )));
-    heap.push(TropicalWeight::new(Some( 3.0          )));
-    heap.push(TropicalWeight::new(Some( 2.0          )));
-    heap.push(TropicalWeight::new(Some( 1.0          )));
-    heap.push(TropicalWeight::new(Some( 0.6989700043 )));
-    heap.push(TropicalWeight::new(Some( 0.5228787453 )));
-    heap.push(TropicalWeight::new(Some( 0.3979400087 )));
-    heap.push(TropicalWeight::new(Some( 0.3010299957 )));
-    heap.push(TropicalWeight::new(Some( 0.2218487496 )));
-    heap.push(TropicalWeight::new(Some( 0.15490196   )));
-    heap.push(TropicalWeight::new(Some( 0.096910013  )));
-    heap.push(TropicalWeight::new(Some( 0.0457574906 )));
-    heap.push(TropicalWeight::one());
+    heap.push(RevOrd(TropicalWeight::<f32>::zero()));
+    heap.push(RevOrd(TropicalWeight::new(Some( 11.0         ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 10.0         ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 9.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 8.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 7.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 6.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 5.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 4.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 3.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 2.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 1.0          ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 0.6989700043 ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 0.5228787453 ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 0.3979400087 ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 0.3010299957 ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 0.2218487496 ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 0.15490196   ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 0.096910013  ))));
+    heap.push(RevOrd(TropicalWeight::new(Some( 0.0457574906 ))));
+    heap.push(RevOrd(TropicalWeight::one()));
 
     while let Some(w) = heap.pop() {
         println!("{:?}", w);

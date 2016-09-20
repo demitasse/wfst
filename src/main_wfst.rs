@@ -66,9 +66,14 @@ fn main() {
     println!("");
     println!("Number of states: {}", fst.get_numstates());
     println!("==============================");
-    let revfst: VecFst<_> = algorithms::reverse(&mut fst);
     println!("reverse()");
+    let revfst: VecFst<_> = algorithms::reverse(&mut fst);
     println!("");
     println!("{:?}", revfst);    
+    println!("==============================");
+    println!("shortest_distance()");
+    let distances = algorithms::shortestpath::shortest_distance(&mut fst);
+    println!("");
+    println!("{:?}", distances);    
 
 }

@@ -21,6 +21,8 @@ keywords = ["wfst", "fst"]
 rustc-serialize = "0.3.19"
 bincode = "0.6.0"
 rand = "0.3.14"
+linked-hash-map = "0.3.0"
+
 
 [lib]
 name = "wfst"

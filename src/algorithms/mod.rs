@@ -108,3 +108,4 @@ pub fn reverse<W: Weight, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (
     ofst
 }
 
+pub mod shortestpath;
