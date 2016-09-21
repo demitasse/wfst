@@ -29,7 +29,7 @@ fn main() {
     let s0 = fst.add_state(TropicalWeight::<f32>::zero());
     let s1 = fst.add_state(TropicalWeight::<f32>::zero());
     let s2 = fst.add_state(TropicalWeight::<f32>::one());
-    fst.set_start(0);
+    fst.set_start(s0);
     fst.add_arc(s0, s1, 0, 0, TropicalWeight::<f32>::zero());
     fst.add_arc(s1, s2, 0, 0, TropicalWeight::<f32>::zero());
     fst.add_arc(s1, s2, 0, 0, TropicalWeight::<f32>::zero());
@@ -75,5 +75,10 @@ fn main() {
     let distances = algorithms::shortestpath::shortest_distance(&mut fst);
     println!("");
     println!("{:?}", distances);    
+    println!("==============================");
+    println!("shortest_paths()");
+    let newfst: VecFst<_> = algorithms::shortestpath::shortest_paths(&mut fst, 1, false);
+    println!("");
+    println!("{:?}", newfst);    
 
 }

@@ -51,6 +51,20 @@ pub trait Idempotent {}
 /// ∀ a,b: a ⊕ b = a ∨ a ⊕ b = b
 pub trait Path {}
 
+
+// *Natural Order* by definition:
+//                              a <= b iff a + b = a
+// Is a negative partial order iff the semiring is Idempotent and
+// forms a *total order* iff the semiring has the Path property.
+//
+// See Mehryar Mohri, "Semiring Framework and Algorithms for
+// Shortest-Distance Problems", Journal of Automata, Languages and
+// Combinatorics 7(3):321-350, 2002.
+pub trait NaturalLess: Weight + Idempotent + Path { //Path?
+    fn natural_less(&self, rhs: &Self) -> bool;
+}
+
+
 /// Power is the iterated product for arbitrary semirings such that
 /// Power(w, 0) is One() for the semiring, and
 /// Power(w, n) = Times(Power(w, n-1), w)

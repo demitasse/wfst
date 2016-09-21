@@ -39,3 +39,7 @@ path = "src/main_semiring.rs"
 [[bin]]
 name = "test_semiring"
 path = "src/test_semiring.rs"
+
+[[bin]]
+name = "example_shortestpath"
+path = "src/example_shortestpath.rs"

@@ -22,24 +22,54 @@
 // """
 ////////////////////////////////////////////////////////////////////////////////
 
-//! This module implements the shortest path algorithms. See the source
-//! files `main_wfst.rs` for simple examples of intended use.
+//! This module implements the shortest path algorithm described in:
+//!
+//! Mehryar Mohri and Michael Riley. "An efficient algorithm for the
+//! N-best-strings problem," In: *Proceedings of the International
+//! Conference on Spoken Language Processing 2002* (ICSLP'02), Denver,
+//! Colorado, September 2002.
+//!
+//! See the source file `example_shortestpath.rs` for a simple example
+//! of intended use.
 
-use std::collections::{HashMap, BinaryHeap};
+extern crate rustc_serialize;
+use self::rustc_serialize::Encodable;
+use std::hash::{Hash, Hasher, BuildHasher};
+use std::collections::hash_map::RandomState;
+extern crate bincode;
+use self::bincode::SizeLimit;
+use self::bincode::rustc_serialize::encode;
 
-use super::super::semiring::{Weight};
+use std::cmp::Ordering;
+use std::collections::HashMap;
+
+use super::super::semiring::{Weight, NaturalLess};
 use super::super::{Fst, ExpandedFst, MutableFst, StateId, Arc};
-use super::super::utils::{RevOrd, LinkedHashSet};
+use super::super::utils::{LinkedHashSet, ComparatorHeap};
 use super::super::wfst_vec::VecFst;
 use super::{extendfinal, reverse};
 
+////////////////////////////////////////////////////////////////////////////////
+// (state, weight) tuple with Ord trait implementation for use in
+// shortest_paths()
+#[derive(Clone, Debug)]
+struct Pair<W: Weight + NaturalLess + Encodable>(StateId, W);
 
+impl<W: Weight + NaturalLess + Encodable> PartialEq for Pair<W> {
+    fn eq(&self, rhs: &Self) -> bool {
+        let mut hasher = RandomState::new().build_hasher();
+        self.hash(&mut hasher) == rhs.hash(&mut hasher)
+    }
+}
+impl<W: Weight + NaturalLess + Encodable> Eq for Pair<W> {}
+impl<W: Weight + NaturalLess + Encodable> Hash for Pair<W> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+        encode(&self.1, SizeLimit::Infinite).unwrap().hash(state);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
 
-
-//DEMIT TODO:
-//     -- Implement Ord on (StateId, Weight + NaturalLess)
-//     -- Implement NaturalLess trait in semiring modules instead of Ord
-//     -- Implement shortest_paths and test in main_wfst.rs
 
 pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: &mut F) -> Vec<W> {
     let revfst: VecFst<_> = reverse(ifst);
@@ -83,8 +113,7 @@ pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: &m
     d
 }
 
-pub fn shortest_paths<W: Weight + Ord, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (ifst: &mut F, n: usize, det: bool) -> O {
-    let orignstates = ifst.get_numstates();
+pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (ifst: &mut F, n: usize, det: bool) -> O {
     let ifst = if det {
         println!("Determinize not yet implemented!");
         ifst
@@ -102,21 +131,68 @@ pub fn shortest_paths<W: Weight + Ord, F: ExpandedFst<W> + MutableFst<W>, O: Mut
     }
     
     let d = shortest_distance(ifst);
+    let compare = |p1: &Pair<W>, p2: &Pair<W>| -> Ordering {
+        let a1 = p2.1.times(&d[p2.0]);
+        let a2 = p1.1.times(&d[p1.0]);
+        if a1.eq(&a2) {
+            Ordering::Equal
+        } else if a1.natural_less(&a2) {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
+    };
     extendfinal(ifst);
     let nstates = ifst.get_numstates();
     let mut r: Vec<usize> = Vec::with_capacity(nstates);
+    r.resize(nstates, 0);
     
-    let mut queue = BinaryHeap::new(); //Priority Queue
+    let mut queue = ComparatorHeap::new(&compare); //Priority Queue
+    let mut previous = HashMap::<Pair<W>, Option<Pair<W>>>::with_capacity(nstates);
+    let mut statemap = HashMap::<Pair<W>, StateId>::with_capacity(nstates);
+    
+    let i = ifst.get_start().unwrap();
+    let pair = Pair(i, W::one());
+    queue.push(pair.clone());
+    previous.insert(pair.clone(), None);
 
-    //let mut previous = HashMap::with_capacity(orignstates);
-    //let mut statemap = HashMap::with_capacity(orignstates);
+    while !queue.is_empty() {
+        let pair = queue.pop().unwrap();
+        let Pair(p, c) = pair.clone();
 
+        let np = ofst.add_state(ifst.get_finalweight(p));
+        statemap.insert(pair.clone(), np);
 
-    //tmp:
-    queue.push(RevOrd(W::zero()));
+        let _ppair = previous.get(&pair).unwrap().clone();
+        if _ppair.is_none() {
+            //this is the start state
+            ofst.set_start(np);
+        } else {
+            //add the incoming arc from previous to current
+            let ppair = _ppair.unwrap();
+            let pp = *statemap.get(&ppair).unwrap();
+            let opp = ppair.0;
+            for arc in ifst.arc_iter(opp) {
+                if arc.nextstate() == p {
+                    ofst.add_arc(pp, np, arc.ilabel(), arc.olabel(), arc.weight());
+                }
+            }
+        }
 
+        r[p] += 1;
+        if r[p] == n && ifst.get_finalweight(p).ne(&W::zero()) {
+            break;
+        }
 
+        if r[p] <= n {
+            for arc in ifst.arc_iter(p) {
+                let nc = c.times(&arc.weight());
+                let npair = Pair(arc.nextstate(), nc);
+                previous.insert(npair.clone(), Some(pair.clone()));
+                queue.push(npair.clone());
+            }
+        }
+    }
 
-    unimplemented!()
+    ofst
 }
-

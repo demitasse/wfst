@@ -32,8 +32,6 @@
 //! numbers. See the source files `main_semiring.rs` and
 //! `test_semiring.rs` for simple examples of intended use.
 
-use std::cmp::Ordering;
-
 use super::*;
 use super::float::Float;
 
@@ -155,32 +153,11 @@ impl<T: Float<T>> Commutative for TropicalWeight<T> {}
 impl<T: Float<T>> Idempotent for TropicalWeight<T> {}
 impl<T: Float<T>> Path for TropicalWeight<T> {}
 
-// *Natural Order* by definition:
-//                              a <= b iff a + b = a
-// Is a negative partial order iff the semiring is Idempotent and
-// forms a *total order* iff the semiring has the Path property.
-//
-// See Mehryar Mohri, "Semiring Framework and Algorithms for
-// Shortest-Distance Problems", Journal of Automata, Languages and
-// Combinatorics 7(3):321-350, 2002.
-impl<T: Float<T>> Eq for TropicalWeight<T> {}
-impl<T: Float<T>> Ord for TropicalWeight<T> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.eq(other) {
-            Ordering::Equal
-        } else if self.plus(other).eq(other) {
-            Ordering::Less
-        } else {
-            Ordering::Greater
-        }
+impl<T: Float<T>> NaturalLess for TropicalWeight<T> {
+    fn natural_less(&self, rhs: &Self) -> bool {
+        self.plus(rhs).eq(rhs) && !self.eq(rhs)
     }
 }
-impl<T: Float<T>> PartialOrd for TropicalWeight<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //LOG SEMIRING: (ln(e^-x + e^y), +, inf, 0)
@@ -430,28 +407,8 @@ impl<T: Float<T>> Commutative for MinmaxWeight<T> {}
 impl<T: Float<T>> Idempotent for MinmaxWeight<T> {}
 impl<T: Float<T>> Path for MinmaxWeight<T> {}
 
-// *Natural Order* by definition:
-//                              a <= b iff a + b = a
-// Is a negative partial order iff the semiring is Idempotent and
-// forms a *total order* iff the semiring has the Path property.
-//
-// See Mehryar Mohri, "Semiring Framework and Algorithms for
-// Shortest-Distance Problems", Journal of Automata, Languages and
-// Combinatorics 7(3):321-350, 2002.
-impl<T: Float<T>> Eq for MinmaxWeight<T> {}
-impl<T: Float<T>> Ord for MinmaxWeight<T> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.eq(other) {
-            Ordering::Equal
-        } else if self.plus(other).eq(other) {
-            Ordering::Less
-        } else {
-            Ordering::Greater
-        }
-    }
-}
-impl<T: Float<T>> PartialOrd for MinmaxWeight<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+impl<T: Float<T>> NaturalLess for MinmaxWeight<T> {
+    fn natural_less(&self, rhs: &Self) -> bool {
+        self.plus(rhs).eq(rhs) && !self.eq(rhs)
     }
 }
