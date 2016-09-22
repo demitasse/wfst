@@ -27,20 +27,20 @@ fn main() {
     // let s2 = fst.add_state(TropicalWeight::zero());
     // let s3 = fst.add_state(TropicalWeight::one());
     // fst.set_start(s0);
-    // fst.set_isyms(vec!("a", "b", "c", "d").iter().map(|x| String::from(*x)));
-    // fst.set_osyms(vec!("a", "b", "c", "d").iter().map(|x| String::from(*x)));
-    // fst.add_arc(s0, s1, 0, 0, TropicalWeight::new(Some(0.1)));
-    // fst.add_arc(s0, s2, 1, 1, TropicalWeight::new(Some(0.1)));
-    // fst.add_arc(s1, s3, 2, 2, TropicalWeight::new(Some(0.4)));
-    // fst.add_arc(s1, s3, 3, 3, TropicalWeight::new(Some(0.2)));
-    // fst.add_arc(s2, s3, 2, 2, TropicalWeight::new(Some(0.3)));
-    // fst.add_arc(s2, s3, 3, 3, TropicalWeight::new(Some(0.2)));
+    // fst.set_isyms(vec!("", "a", "b", "c", "d").iter().map(|x| String::from(*x)));
+    // fst.set_osyms(vec!("", "a", "b", "c", "d").iter().map(|x| String::from(*x)));
+    // fst.add_arc(s0, s1, 1, 1, TropicalWeight::new(Some(1.0)));
+    // fst.add_arc(s0, s2, 2, 2, TropicalWeight::new(Some(1.0)));
+    // fst.add_arc(s1, s3, 3, 3, TropicalWeight::new(Some(4.0)));
+    // fst.add_arc(s1, s3, 4, 4, TropicalWeight::new(Some(2.0)));
+    // fst.add_arc(s2, s3, 3, 3, TropicalWeight::new(Some(3.0)));
+    // fst.add_arc(s2, s3, 4, 4, TropicalWeight::new(Some(2.0)));
     // println!("==============================");
     // println!("{:?}", fst);
-    // let fst2: VecFst<_> = shortest_paths(&mut fst, 2, false);
+    // println!("==============================");
+    // let fst2: VecFst<_> = shortest_paths(&mut fst, 1, false);
     // println!("==============================");
     // println!("{:?}", fst2);
-
 
     //create example: http://www.openfst.org/twiki/bin/view/FST/ShortestPathDoc
     let mut fst = VecFst::<TropicalWeight<f64>>::new();
@@ -49,21 +49,16 @@ fn main() {
     let s2 = fst.add_state(TropicalWeight::zero());
     let s3 = fst.add_state(TropicalWeight::new(Some(3.0)));
     fst.set_start(s0);
-    fst.set_isyms(vec!("a", "b", "c", "d", "f").iter().map(|x| String::from(*x)));
-    fst.set_osyms(vec!("a", "b", "c", "d", "f").iter().map(|x| String::from(*x)));
-    fst.add_arc(s0, s1, 0, 0, TropicalWeight::new(Some(3.0)));
-    fst.add_arc(s0, s2, 3, 3, TropicalWeight::new(Some(5.0)));
-    fst.add_arc(s1, s1, 1, 1, TropicalWeight::new(Some(2.0)));
-    fst.add_arc(s1, s3, 2, 2, TropicalWeight::new(Some(4.0)));
-    fst.add_arc(s2, s3, 4, 4, TropicalWeight::new(Some(4.0)));
+    fst.set_isyms(vec!("", "a", "b", "c", "d", "f").iter().map(|x| String::from(*x)));
+    fst.set_osyms(vec!("", "a", "b", "c", "d", "f").iter().map(|x| String::from(*x)));
+    fst.add_arc(s0, s1, 1, 1, TropicalWeight::new(Some(3.0)));
+    fst.add_arc(s0, s2, 4, 4, TropicalWeight::new(Some(5.0)));
+    fst.add_arc(s1, s1, 2, 2, TropicalWeight::new(Some(2.0)));
+    fst.add_arc(s1, s3, 3, 3, TropicalWeight::new(Some(4.0)));
+    fst.add_arc(s2, s3, 5, 5, TropicalWeight::new(Some(4.0)));
     println!("==============================");
     println!("{:?}", fst);
-    let fst2: VecFst<_> = shortest_paths(&mut fst, 1, false);
+    let fst2: VecFst<_> = shortest_paths(&mut fst, 2, false);
     println!("==============================");
     println!("{:?}", fst2);
-
-    //DEMIT TODO:
-    // - Symbol tables are wrong (no epsilons)
-    // - Shortest path seems to be inverted
-    // - 
 }

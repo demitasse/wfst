@@ -34,14 +34,14 @@
 
 extern crate rustc_serialize;
 use self::rustc_serialize::Encodable;
-use std::hash::{Hash, Hasher, BuildHasher};
-use std::collections::hash_map::RandomState;
+use std::hash::{Hash, Hasher, SipHasher};
 extern crate bincode;
 use self::bincode::SizeLimit;
 use self::bincode::rustc_serialize::encode;
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use super::super::semiring::{Weight, NaturalLess};
 use super::super::{Fst, ExpandedFst, MutableFst, StateId, Arc};
@@ -52,17 +52,25 @@ use super::{extendfinal, reverse};
 ////////////////////////////////////////////////////////////////////////////////
 // (state, weight) tuple with Ord trait implementation for use in
 // shortest_paths()
-#[derive(Clone, Debug)]
-struct Pair<W: Weight + NaturalLess + Encodable>(StateId, W);
+fn hash<T: Hash + Debug>(obj: T) -> u64 {
+    let mut hasher = SipHasher::new();
+    obj.hash(&mut hasher);
+    hasher.finish()
+    // let a = hasher.finish();
+    // println!("{:?}\t{:?}", obj, a);
+    // a
+}
 
-impl<W: Weight + NaturalLess + Encodable> PartialEq for Pair<W> {
+#[derive(Clone, Debug)]
+struct Pair<W: Weight + Encodable>(StateId, W);
+
+impl<W: Weight + Encodable> PartialEq for Pair<W> {
     fn eq(&self, rhs: &Self) -> bool {
-        let mut hasher = RandomState::new().build_hasher();
-        self.hash(&mut hasher) == rhs.hash(&mut hasher)
+        hash(self) == hash(rhs)
     }
 }
-impl<W: Weight + NaturalLess + Encodable> Eq for Pair<W> {}
-impl<W: Weight + NaturalLess + Encodable> Hash for Pair<W> {
+impl<W: Weight + Encodable> Eq for Pair<W> {}
+impl<W: Weight + Encodable> Hash for Pair<W> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
         encode(&self.1, SizeLimit::Infinite).unwrap().hash(state);
@@ -110,6 +118,7 @@ pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: &m
             
         }
     }
+    //println!("{:?}", d);
     d
 }
 
@@ -132,9 +141,9 @@ pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + M
     
     let d = shortest_distance(ifst);
     let compare = |p1: &Pair<W>, p2: &Pair<W>| -> Ordering {
-        let a1 = p2.1.times(&d[p2.0]);
-        let a2 = p1.1.times(&d[p1.0]);
-        if a1.eq(&a2) {
+        let a1 = p1.1.times(&d[p1.0]);
+        let a2 = p2.1.times(&d[p2.0]);
+        if a1.eq(&a2) {  //demit: or use approx_eq()
             Ordering::Equal
         } else if a1.natural_less(&a2) {
             Ordering::Less
@@ -157,8 +166,23 @@ pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + M
     previous.insert(pair.clone(), None);
 
     while !queue.is_empty() {
+        //println!("{:?}", r);
+        // ////
+        // let mut v = Vec::new();
+        // while !queue.is_empty() {
+        //     v.push(queue.pop().unwrap());
+        // }
+        // for e in &v {
+        //     let Pair(p1, c1) = e.clone();
+        //     println!("\t{:?} {:?}", p1, c1.times(&d[p1]));
+        // }
+        // while !v.is_empty() {
+        //     queue.push(v.pop().unwrap());
+        // }
+        // ////
         let pair = queue.pop().unwrap();
         let Pair(p, c) = pair.clone();
+        //println!("{:?} {:?}", p, c.times(&d[p]));
 
         let np = ofst.add_state(ifst.get_finalweight(p));
         statemap.insert(pair.clone(), np);
@@ -193,6 +217,5 @@ pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + M
             }
         }
     }
-
     ofst
 }
