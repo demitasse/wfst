@@ -60,7 +60,7 @@ fn calc_coaccessible<W: Weight, F: Fst<W>> (fst: &F, state: StateId, paths: &mut
     let mut new_coaccessibles = Vec::<StateId>::new();
     for path in paths.iter() {
         if let Some(index) = path.iter().rposition(|&x| x == state) {
-            if fst.get_finalweight(state).ne(&W::zero()) || coaccessible.contains(&state) {
+            if fst.is_final(state) || coaccessible.contains(&state) {
                 for i in (0..index+1).rev() {
                     if !coaccessible.contains(&path[i]) {
                         new_coaccessibles.push(path[i]);
@@ -121,7 +121,7 @@ fn dfs<W: Weight, F: ExpandedFst<W>> (fst: &F) -> (HashSet<StateId>, HashSet<Sta
     }
 
     for i in 0..fst.get_numstates() {
-        if fst.get_finalweight(i).ne(&W::zero()) {
+        if fst.is_final(i) {
             calc_coaccessible(fst, i, &mut paths, &mut coaccessible);
         }
     }

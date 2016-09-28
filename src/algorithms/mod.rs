@@ -46,7 +46,7 @@ pub fn extendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
     //Collect current final states
     let mut finalstates: Vec<StateId> = Vec::new();
     for i in 0..fst.get_numstates() {
-        if !fst.get_finalweight(i).eq(&W::zero()) {
+        if fst.is_final(i) {
             finalstates.push(i)
         }
     }
@@ -65,7 +65,7 @@ pub fn unextendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F)
     //Find final state (assuming only one exists)
     let mut finalstate = 0;
     for i in 0..fst.get_numstates() {
-        if !fst.get_finalweight(i).eq(&W::zero()) {
+        if fst.is_final(i) {
             finalstate = i;
             break
         }
@@ -98,7 +98,7 @@ pub fn reverse<W: Weight, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (
     //Set start/end states
     for i in 0..ifst.get_numstates() {
         ofst.add_state(W::zero());
-        if !ifst.get_finalweight(i).eq(&W::zero()) {
+        if ifst.is_final(i) {
             ofst.set_start(i);
         }
     }

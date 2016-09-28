@@ -205,7 +205,7 @@ pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + M
         }
 
         r[p] += 1;
-        if r[p] == n && ifst.get_finalweight(p).ne(&W::zero()) {
+        if r[p] == n && ifst.is_final(p) {
             break;
         }
 

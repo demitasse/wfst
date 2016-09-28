@@ -145,6 +145,10 @@ impl<W: Weight> Fst<W> for VecFst<W> {
     fn get_osyms(&self) -> Option<Self::Symtab> {
         self.osyms.clone()
     }
+
+    fn is_final(&self, id: StateId) -> bool {
+        self.get_finalweight(id).ne(&W::zero())
+    }
 }
 
 impl<W: Weight> MutableFst<W> for VecFst<W> {  

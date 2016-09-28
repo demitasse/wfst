@@ -50,6 +50,7 @@ pub trait Fst<W: Weight>: Debug {
     fn arc_iter(&self, StateId) -> Self::Iter;
     fn get_isyms(&self) -> Option<Self::Symtab>;
     fn get_osyms(&self) -> Option<Self::Symtab>;
+    fn is_final(&self, StateId) -> bool;
 }
 
 // This interface defined by looking at OpenFST (C++ and Java
