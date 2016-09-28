@@ -18,7 +18,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 ////////// ARC
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct StdArc<W: Weight> {
     ilabel: Label,
     olabel: Label,
@@ -169,15 +169,28 @@ impl<W: Weight> MutableFst<W> for VecFst<W> {
         //update arcs in remaining states
         for i in 0..self.states.len() {
             let narcs = self.states[i].borrow().arcs.len();
+            let mut to_delete = Vec::<usize>::new();
+            let mut state = self.states[i].borrow_mut();
             for j in 0..narcs {
-                let mut state = self.states[i].borrow_mut();
                 let nextstate = state.arcs[j].borrow().nextstate;
                 if nextstate == id {
-                    state.arcs.remove(j);
+                    to_delete.push(j)
                 } else if nextstate > id {
                     state.arcs[j].borrow_mut().nextstate -= 1;
                 }
             }
+            to_delete.sort();
+            for j in (0..to_delete.len()).rev() {
+                state.arcs.remove(to_delete[j]);
+            }
+        }
+    }
+
+    fn del_states<T: IntoIterator<Item=StateId>>(&mut self, states: T) {
+        let mut v: Vec<_> = states.into_iter().collect();
+        v.sort();
+        for j in (0..v.len()).rev() {
+            self.del_state(v[j]);
         }
     }
 

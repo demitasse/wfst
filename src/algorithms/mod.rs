@@ -25,8 +25,13 @@
 //! This module implements the generic WFST algorithms. See the source
 //! files `main_wfst.rs` for simple examples of intended use.
 
-// TODO: We can still improve the implementations here to loosen the
-// type requirements, e.g. have `reverse` work for any input fst type.
+// TODO:
+//   -- We can still improve the implementations here to loosen the
+//      type requirements, e.g. have `reverse` work for any input fst
+//      type.
+//   -- We would also like to change the interfaces here to be more
+//      ``functional'', i.e. with function signatures that uses move
+//      semantics to conform to Rust conventions (clearer I/O flow).
 use super::semiring::{Weight};
 use super::{ExpandedFst, MutableFst, StateId, Arc};
 
@@ -109,3 +114,4 @@ pub fn reverse<W: Weight, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (
 }
 
 pub mod shortestpath;
+pub mod connect;

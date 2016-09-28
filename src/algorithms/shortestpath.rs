@@ -49,9 +49,6 @@ use super::super::utils::{LinkedHashSet, ComparatorHeap};
 use super::super::wfst_vec::VecFst;
 use super::{extendfinal, reverse};
 
-////////////////////////////////////////////////////////////////////////////////
-// (state, weight) tuple with Ord trait implementation for use in
-// shortest_paths()
 fn hash<T: Hash + Debug>(obj: T) -> u64 {
     let mut hasher = SipHasher::new();
     obj.hash(&mut hasher);
@@ -61,6 +58,9 @@ fn hash<T: Hash + Debug>(obj: T) -> u64 {
     // a
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// (state, weight) tuple with Ord trait implementation for use in
+// shortest_paths()
 #[derive(Clone, Debug)]
 struct Pair<W: Weight + Encodable>(StateId, W);
 
@@ -78,7 +78,7 @@ impl<W: Weight + Encodable> Hash for Pair<W> {
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-
+/// Calculates the shortest distances from each state to the final
 pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: &mut F) -> Vec<W> {
     let revfst: VecFst<_> = reverse(ifst);
     let nstates = revfst.get_numstates();
@@ -122,6 +122,7 @@ pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: &m
     d
 }
 
+/// Calculates the n-best shortest path from the initial to the final state
 pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (ifst: &mut F, n: usize, det: bool) -> O {
     let ifst = if det {
         println!("Determinize not yet implemented!");
