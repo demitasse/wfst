@@ -79,7 +79,7 @@ impl<W: Weight + Encodable> Hash for Pair<W> {
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Calculates the shortest distances from each state to the final
-pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: &mut F) -> Vec<W> {
+pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: F) -> Vec<W> {
     let revfst: VecFst<_> = reverse(ifst);
     let nstates = revfst.get_numstates();
 
@@ -123,8 +123,8 @@ pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: &m
 }
 
 /// Calculates the n-best shortest path from the initial to the final state
-pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (ifst: &mut F, n: usize, det: bool) -> O {
-    let ifst = if det {
+pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (mut ifst: F, n: usize, det: bool) -> O {
+    ifst = if det {
         println!("Determinize not yet implemented!");
         ifst
     } else {
@@ -140,7 +140,7 @@ pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + M
         ofst.set_isyms(isyms);
     }
     
-    let d = shortest_distance(ifst);
+    let d = shortest_distance(ifst.clone());
     let compare = |p1: &Pair<W>, p2: &Pair<W>| -> Ordering {
         let a1 = p1.1.times(&d[p1.0]);
         let a2 = p2.1.times(&d[p2.0]);
@@ -152,7 +152,7 @@ pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + M
             Ordering::Greater
         }
     };
-    extendfinal(ifst);
+    ifst = extendfinal(ifst);
     let nstates = ifst.get_numstates();
     let mut r: Vec<usize> = Vec::with_capacity(nstates);
     r.resize(nstates, 0);

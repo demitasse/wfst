@@ -132,8 +132,8 @@ fn dfs<W: Weight, F: ExpandedFst<W>> (fst: &F) -> (HashSet<StateId>, HashSet<Sta
 
 /// Trims an fst, removing states and arcs that are not on a
 /// successful path
-pub fn connect<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
-    let (accessible, coaccessible) = dfs(fst);
+pub fn connect<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (mut fst: F) -> F {
+    let (accessible, coaccessible) = dfs(&fst);
     let mut to_delete = Vec::<StateId>::new();
 
     for i in 0..fst.get_numstates() {
@@ -142,4 +142,5 @@ pub fn connect<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
         }
     }
     fst.del_states(to_delete);
+    fst
 }

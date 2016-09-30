@@ -67,7 +67,7 @@ pub trait MutableFst<W: Weight>: Fst<W> {
     fn set_osyms<T: IntoIterator<Item=String>>(&mut self, symtab: T);
 }
 
-pub trait ExpandedFst<W: Weight>: Fst<W> {
+pub trait ExpandedFst<W: Weight>: Fst<W> + Clone {
     fn get_numstates(&self) -> usize;
 }
 

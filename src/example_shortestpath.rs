@@ -39,7 +39,7 @@ fn main() {
     // println!("==============================");
     // println!("{:?}", fst);
     // println!("==============================");
-    // let fst2: VecFst<_> = shortest_paths(&mut fst, 1, false);
+    // let fst2: VecFst<_> = shortest_paths(fst, 1, false);
     // println!("==============================");
     // println!("{:?}", fst2);
 
@@ -59,8 +59,8 @@ fn main() {
     // fst.add_arc(s2, s3, 5, 5, TropicalWeight::new(Some(4.0)));
     // println!("==============================");
     // println!("{:?}", fst);
-    // let mut fst2: VecFst<_> = shortest_paths(&mut fst, 2, false);
-    // connect(&mut fst2);
+    // let mut fst2: VecFst<_> = shortest_paths(fst, 2, false);
+    // fst2 = connect(fst2);
     // println!("==============================");
     // println!("{:?}", fst2);
 
@@ -80,8 +80,8 @@ fn main() {
     fst.add_arc(s2, s3, 5, 5, TropicalWeight::new(Some(-1.0)));
     println!("==============================");
     println!("{:?}", fst);
-    let mut fst2: VecFst<_> = shortest_paths(&mut fst, 1, false);
-    connect(&mut fst2);
+    let mut fst2: VecFst<_> = shortest_paths(fst, 1, false);
+    fst2 = connect(fst2);
     println!("==============================");
     println!("{:?}", fst2);    
     

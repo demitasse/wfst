@@ -29,9 +29,6 @@
 //   -- We can still improve the implementations here to loosen the
 //      type requirements, e.g. have `reverse` work for any input fst
 //      type.
-//   -- We would also like to change the interfaces here to be more
-//      ``functional'', i.e. with function signatures that uses move
-//      semantics to conform to Rust conventions (clearer I/O flow).
 use super::semiring::{Weight};
 use super::{ExpandedFst, MutableFst, StateId, Arc};
 
@@ -42,7 +39,7 @@ use std::vec::Vec;
 /// It adds a new final state with a semiring's "one" final weight and
 /// connects the current final states to it using epsilon transitions
 /// with weight equal to the original final state's weight.
-pub fn extendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
+pub fn extendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (mut fst: F) -> F {
     //Collect current final states
     let mut finalstates: Vec<StateId> = Vec::new();
     for i in 0..fst.get_numstates() {
@@ -58,10 +55,11 @@ pub fn extendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
         fst.add_arc(state, newfinal, 0, 0, finalweight);
         fst.set_finalweight(state, W::zero());
     }
+    fst
 }
 
 /// Undo of the `extendfinal` operation.
-pub fn unextendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F) {
+pub fn unextendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (mut fst: F) -> F {
     //Find final state (assuming only one exists)
     let mut finalstate = 0;
     for i in 0..fst.get_numstates() {
@@ -80,13 +78,14 @@ pub fn unextendfinal<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (fst: &mut F)
         }
     }
     fst.del_state(finalstate);
+    fst
 }
 
 /// Reverses an `Fst`: If the input fst transduces string x to y with
 /// weight a, then the reverse transduces the reverse of x to the
 /// reverse of y with weight a.reverse().
-pub fn reverse<W: Weight, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (ifst: &mut F) -> O {
-    extendfinal(ifst);
+pub fn reverse<W: Weight, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (mut ifst: F) -> O {
+    ifst = extendfinal(ifst);
     //Swap symbol tables
     let mut ofst = O::new();
     if let Some(osyms) = ifst.get_osyms() {
@@ -109,7 +108,6 @@ pub fn reverse<W: Weight, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (
             ofst.add_arc(arc.nextstate(), i, arc.ilabel(), arc.olabel(), arc.weight().reverse())
         }
     }    
-    unextendfinal(ifst);
     ofst
 }
 
