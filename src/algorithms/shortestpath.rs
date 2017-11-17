@@ -34,7 +34,8 @@
 
 extern crate rustc_serialize;
 use self::rustc_serialize::Encodable;
-use std::hash::{Hash, Hasher, SipHasher};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 extern crate bincode;
 use self::bincode::SizeLimit;
 use self::bincode::rustc_serialize::encode;
@@ -50,7 +51,7 @@ use super::super::wfst_vec::VecFst;
 use super::{extendfinal, reverse};
 
 fn hash<T: Hash + Debug>(obj: T) -> u64 {
-    let mut hasher = SipHasher::new();
+    let mut hasher = DefaultHasher::new();
     obj.hash(&mut hasher);
     hasher.finish()
     // let a = hasher.finish();

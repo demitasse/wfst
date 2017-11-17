@@ -4,16 +4,13 @@ version = "0.6.0"
 authors = ["Daniel van Niekerk <dvn.demitasse@gmail.com>"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
-repository = "https://bitbucket.org/demitasse/wfst"
+repository = "https://github.com/demitasse/wfst"
 documentation = "http://www.demitasse.co.za/rust/wfst"
-homepage = "https://bitbucket.org/demitasse/wfst"
+homepage = "https://github.com/demitasse/wfst"
 description = """
-An implementation of Weighted Finite-State Transducers (WFSTs) as
-described in:
+An implementation of Weighted Finite-State Transducers (WFSTs) as described in:
 
-Mehryar Mohri, Fernando Pereira, and Michael Riley. "The design
-principles of a weighted finite-state transducer library," In:
-Theoretical Computer Science vol. 231 issue 1 (2000): pp. 17-32.
+Mehryar Mohri, Fernando Pereira, and Michael Riley. "The design principles of a weighted finite-state transducer library," In: Theoretical Computer Science vol. 231 issue 1 (2000): pp. 17-32.
 """
 keywords = ["wfst", "fst"]
 

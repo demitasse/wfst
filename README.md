@@ -1,13 +1,18 @@
-This software implements Weighted Finite-State Transducers (WFSTs) as
-described in:
+WFST: Weighted Finite State Transducers
+=======================================
 
-Mehryar Mohri, Fernando Pereira, and Michael Riley. "The design
-principles of a weighted finite-state transducer library," In:
-*Theoretical Computer Science* vol. 231 issue 1 (2000): pp. 17-32.
+This software implements Weighted Finite-State Transducers (WFSTs) as described in:
 
-This is a re-implementation in Rust, containing ported fragments
-from the following existing projects (see appropriate licences and
-attribution in the source repository):
+Mehryar Mohri, Fernando Pereira, and Michael Riley. "The design principles of a weighted finite-state transducer library," In: *Theoretical Computer Science* vol. 231 issue 1 (2000): pp. 17-32.
+
+## Documentation
+
+The Rustdoc API documentation can be found here: http://www.demitasse.co.za/rust/wfst
+
+## Attribution and Licencing
+
+This is a re-implementation in Rust, containing ported fragments from the following existing projects (see appropriate licences and attribution in the source repository):
 
  * OpenFst (http://www.openfst.org)
  * CMU Sphinx (http://cmusphinx.sourceforge.net/)
+
