@@ -77,6 +77,6 @@ pub fn power<T: Weight>(w: &T, n: u8) -> T {
 }
 
 
-mod float;
-pub mod test;
+pub mod float;
 pub mod floatweight;
+pub mod test;

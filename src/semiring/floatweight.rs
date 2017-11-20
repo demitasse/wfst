@@ -35,6 +35,10 @@
 use super::*;
 use super::float::Float;
 
+pub trait FloatWeight<T: Float<T>>: Weight {
+    fn new(val: Option<T>) -> Self;
+}
+
 //TROPICAL SEMIRING: (min, +, inf, 0)
 #[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
 pub struct TropicalWeight<T: Float<T>> {
@@ -44,6 +48,12 @@ pub struct TropicalWeight<T: Float<T>> {
 impl<T: Float<T>> TropicalWeight<T> {
     pub fn new(val: Option<T>) -> Self {
         TropicalWeight {val: val}
+    }
+}
+
+impl<T: Float<T>> FloatWeight<T> for TropicalWeight<T> {
+    fn new(val: Option<T>) -> Self {
+        TropicalWeight::new(val)
     }
 }
 
@@ -169,6 +179,12 @@ pub struct LogWeight<T: Float<T>> {
 impl<T: Float<T>> LogWeight<T> {
     pub fn new(val: Option<T>) -> Self {
         LogWeight {val: val}
+    }
+}
+
+impl<T: Float<T>> FloatWeight<T> for LogWeight<T> {
+    fn new(val: Option<T>) -> Self {
+        LogWeight::new(val)
     }
 }
 
@@ -300,6 +316,12 @@ pub struct MinmaxWeight<T: Float<T>> {
 impl<T: Float<T>> MinmaxWeight<T> {
     pub fn new(val: Option<T>) -> Self {
         MinmaxWeight {val: val}
+    }
+}
+
+impl<T: Float<T>> FloatWeight<T> for MinmaxWeight<T> {
+    fn new(val: Option<T>) -> Self {
+        MinmaxWeight::new(val)
     }
 }
 
