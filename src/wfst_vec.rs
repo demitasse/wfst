@@ -238,43 +238,56 @@ impl<W: Weight> ExpandedFst<W> for VecFst<W> {
 
 impl<W: Weight + fmt::Display> fmt::Display for VecFst<W> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut s = String::new();
-        if let Some(startstate) = self.startstate {
-            let narcs = self.states[startstate].borrow().arcs.len();
-            let state = self.states[startstate].borrow();
+        fn helper<W: Weight + fmt::Display>(f: &VecFst<W>, i: usize, mut s: String) -> String {
+            let narcs = f.states[i].borrow().arcs.len();
+            let state = f.states[i].borrow();
             for j in 0..narcs {
-                //DEMIT: no final field if W::one?
-                s.push_str(&format!("{}\t{}\t{}\t{}\t{}\n",
-                                    startstate,
-                                    state.arcs[j].borrow().nextstate,
-                                    state.arcs[j].borrow().ilabel,
-                                    state.arcs[j].borrow().olabel,
-                                    state.arcs[j].borrow().weight
-                ));
+                s.push_str(&format!("{}\t{}", i, state.arcs[j].borrow().nextstate));
+                //String input label if mapping exists (output `_` if map not complete)
+                if let Some(ref syms) = f.isyms {
+                    s.push_str(&format!("\t{}", syms.get(state.arcs[j].borrow().ilabel).unwrap_or(&String::from("_"))));
+                } else {
+                    s.push_str(&format!("\t{}", state.arcs[j].borrow().ilabel));
+                }
+                //String output label if mapping exists (output `_` if map not complete)
+                if let Some(ref syms) = f.osyms {
+                    s.push_str(&format!("\t{}", syms.get(state.arcs[j].borrow().olabel).unwrap_or(&String::from("_"))));
+                } else {
+                    s.push_str(&format!("\t{}", state.arcs[j].borrow().olabel));
+                }
+                //Don't output weight field if equal to W::one
+                let weight = &state.arcs[j].borrow().weight;
+                if *weight == W::one() {
+                    s.push_str(&format!("\n"));
+                } else {
+                    s.push_str(&format!("\t{}\n", *weight));
+                }         
             }
+            if f.is_final(i) {
+                s.push_str(&format!("{}", i));
+                //Don't output weight field if equal to W::one
+                let weight = f.get_finalweight(i);
+                if weight == W::one() {
+                    s.push_str(&format!("\n"));
+                } else {
+                    s.push_str(&format!("\t{}\n", weight));
+                }
+            }
+            s
         }
+        let mut s = String::new();
+        //Start state must be in first line
+        if let Some(startstate) = self.startstate {
+            s = helper(self, startstate, s);
+        }
+        //Remaining states
         for i in 0..self.states.len() {
             if !self.startstate.is_none() {
                 if i == self.startstate.unwrap() {
                     continue
                 }
             }
-            let narcs = self.states[i].borrow().arcs.len();
-            let state = self.states[i].borrow();
-            for j in 0..narcs {
-                //DEMIT: no final field if W::one?
-                s.push_str(&format!("{}\t{}\t{}\t{}\t{}\n",
-                                    i,
-                                    state.arcs[j].borrow().nextstate,
-                                    state.arcs[j].borrow().ilabel,
-                                    state.arcs[j].borrow().olabel,
-                                    state.arcs[j].borrow().weight
-                ));
-            }
-            if self.is_final(i) {
-                s.push_str(&format!("{}\t{}\n", i, self.get_finalweight(i)));
-            }
-            
+            s = helper(self, i, s);
         }
         write!(f, "{}", s.trim())
     }
