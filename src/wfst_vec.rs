@@ -14,6 +14,7 @@
 use super::*;
 use super::semiring::Weight;
 
+use std::fmt;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -232,5 +233,49 @@ impl<W: Weight> MutableFst<W> for VecFst<W> {
 impl<W: Weight> ExpandedFst<W> for VecFst<W> {  
     fn get_numstates(&self) -> usize {
         self.states.len()
+    }
+}
+
+impl<W: Weight + fmt::Display> fmt::Display for VecFst<W> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut s = String::new();
+        if let Some(startstate) = self.startstate {
+            let narcs = self.states[startstate].borrow().arcs.len();
+            let state = self.states[startstate].borrow();
+            for j in 0..narcs {
+                //DEMIT: no final field if W::one?
+                s.push_str(&format!("{}\t{}\t{}\t{}\t{}\n",
+                                    startstate,
+                                    state.arcs[j].borrow().nextstate,
+                                    state.arcs[j].borrow().ilabel,
+                                    state.arcs[j].borrow().olabel,
+                                    state.arcs[j].borrow().weight
+                ));
+            }
+        }
+        for i in 0..self.states.len() {
+            if !self.startstate.is_none() {
+                if i == self.startstate.unwrap() {
+                    continue
+                }
+            }
+            let narcs = self.states[i].borrow().arcs.len();
+            let state = self.states[i].borrow();
+            for j in 0..narcs {
+                //DEMIT: no final field if W::one?
+                s.push_str(&format!("{}\t{}\t{}\t{}\t{}\n",
+                                    i,
+                                    state.arcs[j].borrow().nextstate,
+                                    state.arcs[j].borrow().ilabel,
+                                    state.arcs[j].borrow().olabel,
+                                    state.arcs[j].borrow().weight
+                ));
+            }
+            if self.is_final(i) {
+                s.push_str(&format!("{}\t{}\n", i, self.get_finalweight(i)));
+            }
+            
+        }
+        write!(f, "{}", s.trim())
     }
 }

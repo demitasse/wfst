@@ -79,6 +79,17 @@ fn main() {
     println!("shortest_paths()");
     let newfst: VecFst<_> = algorithms::shortestpath::shortest_paths(fst, 1, false);
     println!("");
-    println!("{:?}", newfst);    
+    println!("{:?}", newfst);
+    println!("==============================");
+    
+    let mut fst = VecFst::<TropicalWeight<f32>>::new();
+    let s0 = fst.add_state(TropicalWeight::<f32>::zero());
+    let s1 = fst.add_state(TropicalWeight::<f32>::zero());
+    let s2 = fst.add_state(TropicalWeight::<f32>::one());
+    fst.set_start(s0);
+    fst.add_arc(s0, s1, 1, 4, TropicalWeight::<f32>::new(Some(0.4)));
+    fst.add_arc(s1, s2, 2, 5, TropicalWeight::<f32>::zero());
+    fst.add_arc(s1, s2, 3, 6, TropicalWeight::<f32>::zero());
+    println!("{}", fst);
 
 }

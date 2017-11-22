@@ -9,7 +9,7 @@
 //! This module implements the Float trait which abstracts float types
 //! for use in Weight. Not generally used directly.
 
-use std::fmt::Debug;
+use std::fmt::{Debug};
 use std::ops::{Add, Sub};
 use std::{f64, f32};
 

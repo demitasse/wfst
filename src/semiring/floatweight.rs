@@ -35,6 +35,8 @@
 use super::*;
 use super::float::Float;
 
+use std::fmt;
+
 pub trait FloatWeight<T: Float<T>>: Weight {
     fn new(val: Option<T>) -> Self;
 }
@@ -139,6 +141,16 @@ impl<T: Float<T>> Weight for TropicalWeight<T> {
 
     fn wtype() -> String {
         format!("tropical{}", T::get_precision())
+    }
+}
+
+impl<T: Float<T> + fmt::Display> fmt::Display for TropicalWeight<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(ref val) = self.val {
+            write!(f, "{}", val)
+        } else {
+            write!(f, "None")
+        }
     }
 }
 
@@ -287,6 +299,16 @@ impl<T: Float<T>> Weight for LogWeight<T> {
     }
 }
 
+impl<T: Float<T> + fmt::Display> fmt::Display for LogWeight<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(ref val) = self.val {
+            write!(f, "{}", val)
+        } else {
+            write!(f, "None")
+        }
+    }
+}
+
 impl<T: Float<T>> PartialEq for LogWeight<T> {
     fn eq(&self, rhs: &Self) -> bool {
         if let Some(val) = self.val.clone() {
@@ -405,6 +427,16 @@ impl<T: Float<T>> Weight for MinmaxWeight<T> {
 
     fn wtype() -> String {
         format!("minmax{}", T::get_precision())
+    }
+}
+
+impl<T: Float<T> + fmt::Display> fmt::Display for MinmaxWeight<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(ref val) = self.val {
+            write!(f, "{}", val)
+        } else {
+            write!(f, "None")
+        }
     }
 }
 

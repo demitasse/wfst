@@ -1,6 +1,6 @@
 [package]
 name = "wfst"
-version = "0.7.0"
+version = "0.6.1"
 authors = ["Daniel van Niekerk <dvn.demitasse@gmail.com>"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
@@ -41,6 +41,10 @@ path = "src/test_semiring.rs"
 [[bin]]
 name = "wfstcompile"
 path = "src/wfstcompile.rs"
+
+[[bin]]
+name = "wfstprint"
+path = "src/wfstprint.rs"
 
 [[bin]]
 name = "example_shortestpath"
