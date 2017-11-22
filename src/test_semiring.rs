@@ -37,11 +37,10 @@ use wfst::semiring::test::{RandomWeight, RandomWeightGenerator};
 use wfst::semiring::*;
 use wfst::semiring::floatweight::*;
 
-extern crate rustc_serialize;
-use rustc_serialize::{Encodable, Decodable};
+extern crate serde;
+use serde::{Serialize, Deserialize};
 extern crate bincode;
-use bincode::SizeLimit;
-use bincode::rustc_serialize::{encode, decode};
+use bincode::{serialize, deserialize, Infinite};
 
 // Tests (plus, times, zero, one) defines a commutative semiring.
 fn test_semiring1<T: Weight + Semiring + Commutative>(w1: &T, w2: &T, w3: &T) {
@@ -143,9 +142,9 @@ fn test_equality<T: Weight>(w1: &T, w2: &T, w3: &T) {
     }
 }
 
-fn test_io<T: Weight + Encodable + Decodable>(w1: &T) {
-    let encoded = encode(w1, SizeLimit::Infinite).unwrap();
-    let ww = decode(&encoded).unwrap();
+fn test_io<T: Weight + Serialize + Deserialize>(w1: &T) {
+    let encoded = serialize(w1, Infinite).unwrap();
+    let ww = deserialize(&encoded).unwrap();
     assert!(w1.eq(&ww));
 }
 
@@ -157,9 +156,9 @@ fn test_clone<T: Weight>(w1: &T) {
 // Test a variety of identities and properties that must hold for the
 // Weight implementation to be well-defined.  Note in the tests we use
 // approx_eq() rather than == where the weights might be inexact.
-fn test12<T: RandomWeight + Semiring + Commutative + Idempotent + Path + Debug + Encodable + Decodable>(rng: &mut StdRng,
-                                                                                                        n_iterations: u32,
-                                                                                                        test_div: bool) {
+fn test12<T: RandomWeight + Semiring + Commutative + Idempotent + Path + Debug + Serialize + Deserialize>(rng: &mut StdRng,
+                                                                                                          n_iterations: u32,
+                                                                                                          test_div: bool) {
     for _ in 0..n_iterations {
         let w1 = rng.genweight::<T>(true);
         let w2 = rng.genweight::<T>(true);
@@ -176,9 +175,9 @@ fn test12<T: RandomWeight + Semiring + Commutative + Idempotent + Path + Debug +
     }
 }
 
-fn test1<T: RandomWeight + Semiring + Commutative + Debug + Encodable + Decodable>(rng: &mut StdRng,
-                                                                                   n_iterations: u32,
-                                                                                   test_div: bool) {
+fn test1<T: RandomWeight + Semiring + Commutative + Debug + Serialize + Deserialize>(rng: &mut StdRng,
+                                                                                     n_iterations: u32,
+                                                                                     test_div: bool) {
     for _ in 0..n_iterations {
         let w1 = rng.genweight::<T>(true);
         let w2 = rng.genweight::<T>(true);

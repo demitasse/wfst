@@ -42,7 +42,7 @@ pub trait FloatWeight<T: Float<T>>: Weight {
 }
 
 //TROPICAL SEMIRING: (min, +, inf, 0)
-#[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct TropicalWeight<T: Float<T>> {
     val: Option<T>
 }
@@ -183,7 +183,7 @@ impl<T: Float<T>> NaturalLess for TropicalWeight<T> {
 
 ////////////////////////////////////////////////////////////////////////////////
 //LOG SEMIRING: (ln(e^-x + e^y), +, inf, 0)
-#[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct LogWeight<T: Float<T>> {
     val: Option<T>
 }
@@ -330,7 +330,7 @@ impl<T: Float<T>> Commutative for LogWeight<T> {}
 
 ////////////////////////////////////////////////////////////////////////////////
 //MINMAX SEMIRING: (min, max, inf, -inf)
-#[derive(Clone, Debug, Hash, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct MinmaxWeight<T: Float<T>> {
     val: Option<T>
 }

@@ -15,11 +15,11 @@ use std::io::{self, Read, Write, BufRead};
 use std::process::exit;
 use std::collections::HashMap;
 
-extern crate rustc_serialize;
-use rustc_serialize::{Encodable, json};
+extern crate serde;
+extern crate serde_json;
+use serde::{Serialize, Deserialize};
 extern crate bincode;
-use bincode::SizeLimit;
-use bincode::rustc_serialize::encode;
+use bincode::{serialize, deserialize, Infinite};
 
 const EXCODE_BADINPUT: i32 = 2;
 
@@ -174,15 +174,24 @@ fn input<T, W, F>(mut fst: F, isymfn: Option<String>, osymfn: Option<String>, ma
     Ok(fst)
 }
 
-fn output<T: Encodable>(t: Result<T, IOError>, bin: bool) -> Result<(), IOError> {
+fn output<T: Serialize + Deserialize + Debug>(t: Result<T, IOError>, jsonout: bool) -> Result<(), IOError> {
     ////Output on STDOUT
     match t {
         Ok(tt) => {
-            if !bin {    
-                let encoded = json::encode(&tt)?;
+            println!("{:?}\n", tt);
+            if jsonout {    
+                let encoded = serde_json::to_string(&tt)?;
+                //////////
+                let ww: T = serde_json::from_str(&encoded).unwrap();
+                println!("{:?}\n", ww);
+                //////////
                 println!("{}", encoded);
             } else {
-                let encoded = encode(&tt, SizeLimit::Infinite)?;
+                let encoded = serialize(&tt, Infinite)?;
+                //////////
+                let ww: T = deserialize(&encoded).unwrap();
+                println!("{:?}\n", ww);
+                //////////
                 io::stdout().write(&*encoded).ok();
             }
             Ok(())
@@ -196,7 +205,7 @@ fn main() {
     //Setup defaults and parse args
     let mut p64 = false;
     let mut wtype: Option<usize> = None;
-    let mut binfile = false;
+    let mut jsonout = false;
     let mut mapisyms = false;
     let mut maposyms = false;
     let mut isymfn: Option<String> = None;
@@ -216,26 +225,26 @@ fn main() {
             .add_option(&["-O", "--strsout"], StoreTrue, "Map output symbols using symbol table (default is to read integer symbols)");
         ap.refer(&mut p64)
             .add_option(&["-p", "--precision"], StoreTrue, "Use 64-bit precision for weights (default is 32-bit)");
-        ap.refer(&mut binfile)
-            .add_option(&["-b", "--bin"], StoreTrue, "Output file in binary format (default is json)");
+        ap.refer(&mut jsonout)
+            .add_option(&["-j", "--json"], StoreTrue, "Output file in JSON format (not recommended JSON does not support inf/NaN -- use only for debugging)");
         ap.parse_args_or_exit();
     }
 
     let semiring = wtype.unwrap_or(0);
     match if p64 {
         match semiring {
-            0 => output(input(VecFst::<TropicalWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), binfile),
-            1 => output(input(VecFst::<LogWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), binfile),
-            2 => output(input(VecFst::<MinmaxWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), binfile),
+            0 => output(input(VecFst::<TropicalWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
+            1 => output(input(VecFst::<LogWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
+            2 => output(input(VecFst::<MinmaxWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
             _ => { eprintln!("Invalid weight type: {:?}", semiring);
                    exit(EXCODE_BADINPUT);
             },
         }
     } else {
         match semiring {
-            0 => output(input(VecFst::<TropicalWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), binfile),
-            1 => output(input(VecFst::<LogWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), binfile),
-            2 => output(input(VecFst::<MinmaxWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), binfile),
+            0 => output(input(VecFst::<TropicalWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
+            1 => output(input(VecFst::<LogWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
+            2 => output(input(VecFst::<MinmaxWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
             _ => { eprintln!("Invalid weight type: {:?}", semiring);
                    exit(EXCODE_BADINPUT);
             },

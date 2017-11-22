@@ -15,9 +15,11 @@ Mehryar Mohri, Fernando Pereira, and Michael Riley. "The design principles of a 
 keywords = ["wfst", "fst"]
 
 [dependencies]
-rustc-serialize = "0.3.19"
+serde = "0.9.0"
+serde_derive = "0.9.0"
+serde_json = "0.9.0"
 argparse = "0.2.0"
-bincode = "0.6.0"
+bincode = "0.7.0"
 rand = "0.3.14"
 linked-hash-map = "0.3.0"
 

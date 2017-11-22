@@ -15,11 +15,11 @@ use std::io::{self, Read, Write, BufRead};
 use std::process::exit;
 use std::collections::HashMap;
 
-extern crate rustc_serialize;
-use rustc_serialize::{Encodable, Decodable, json};
+extern crate serde;
+extern crate serde_json;
+use serde::{Serialize, Deserialize};
 extern crate bincode;
-use bincode::SizeLimit;
-use bincode::rustc_serialize::{encode};//, decode};
+use bincode::{serialize, deserialize, Infinite};
 
 const EXCODE_BADINPUT: i32 = 2;
 
@@ -174,23 +174,23 @@ fn input<T, W, F>(mut fst: F, isymfn: Option<String>, osymfn: Option<String>, ma
     Ok(fst)
 }
 
-fn output<T: Encodable + Decodable + Debug>(t: Result<T, IOError>, jsonout: bool) -> Result<(), IOError> {
+fn output<T: Serialize + Deserialize + Debug>(t: Result<T, IOError>, jsonout: bool) -> Result<(), IOError> {
     ////Output on STDOUT
     match t {
         Ok(tt) => {
-            //eprintln!("{:?}\n", tt);
+            println!("{:?}\n", tt);
             if jsonout {    
-                let encoded = json::encode(&tt)?;
+                let encoded = serde_json::to_string(&tt)?;
                 //////////
-                //let ww: T = json::decode(&encoded).unwrap();
-                //eprintln!("{:?}\n", ww);
+                let ww: T = serde_json::from_str(&encoded).unwrap();
+                println!("{:?}\n", ww);
                 //////////
                 println!("{}", encoded);
             } else {
-                let encoded = encode(&tt, SizeLimit::Infinite)?;
+                let encoded = serialize(&tt, Infinite)?;
                 //////////
-                //let ww: T = decode(&encoded).unwrap();
-                //eprintln!("{:?}\n", ww);
+                let ww: T = deserialize(&encoded).unwrap();
+                println!("{:?}\n", ww);
                 //////////
                 io::stdout().write(&*encoded).ok();
             }

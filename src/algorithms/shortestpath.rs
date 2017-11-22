@@ -32,13 +32,12 @@
 //! See the source file `example_shortestpath.rs` for a simple example
 //! of intended use.
 
-extern crate rustc_serialize;
-use self::rustc_serialize::Encodable;
+extern crate serde;
+use self::serde::Serialize;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 extern crate bincode;
-use self::bincode::SizeLimit;
-use self::bincode::rustc_serialize::encode;
+use self::bincode::{serialize, Infinite};
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -63,24 +62,24 @@ fn hash<T: Hash + Debug>(obj: T) -> u64 {
 // (state, weight) tuple with Ord trait implementation for use in
 // shortest_paths()
 #[derive(Clone, Debug)]
-struct Pair<W: Weight + Encodable>(StateId, W);
+struct Pair<W: Weight + Serialize>(StateId, W);
 
-impl<W: Weight + Encodable> PartialEq for Pair<W> {
+impl<W: Weight + Serialize> PartialEq for Pair<W> {
     fn eq(&self, rhs: &Self) -> bool {
         hash(self) == hash(rhs)
     }
 }
-impl<W: Weight + Encodable> Eq for Pair<W> {}
-impl<W: Weight + Encodable> Hash for Pair<W> {
+impl<W: Weight + Serialize> Eq for Pair<W> {}
+impl<W: Weight + Serialize> Hash for Pair<W> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
-        encode(&self.1, SizeLimit::Infinite).unwrap().hash(state);
+        serialize(&self.1, Infinite).unwrap().hash(state);
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Calculates the shortest distances from each state to the final
-pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: F) -> Vec<W> {
+pub fn shortest_distance<W: Weight + Serialize, F: ExpandedFst<W> + MutableFst<W>> (ifst: F) -> Vec<W> {
     let revfst: VecFst<_> = reverse(ifst);
     let nstates = revfst.get_numstates();
 
@@ -124,7 +123,7 @@ pub fn shortest_distance<W: Weight, F: ExpandedFst<W> + MutableFst<W>> (ifst: F)
 }
 
 /// Calculates the n-best shortest path from the initial to the final state
-pub fn shortest_paths<W: Weight + NaturalLess + Encodable, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (mut ifst: F, n: usize, det: bool) -> O {
+pub fn shortest_paths<W: Weight + NaturalLess + Serialize, F: ExpandedFst<W> + MutableFst<W>, O: MutableFst<W>> (mut ifst: F, n: usize, det: bool) -> O {
     ifst = if det {
         println!("Determinize not yet implemented!");
         ifst

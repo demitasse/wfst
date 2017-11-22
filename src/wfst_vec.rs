@@ -19,7 +19,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 ////////// ARC
-#[derive(PartialEq, Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct StdArc<W: Weight> {
     ilabel: Label,
     olabel: Label,
@@ -90,7 +90,7 @@ impl<W: Weight> Iterator for VecArcIterator<W> {
 
 
 ////////// STATE
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct VecState<W: Weight> {
     finalweight: W,
     arcs: Vec<Rc<RefCell<StdArc<W>>>>
@@ -104,7 +104,7 @@ impl<W: Weight> VecState<W> {
 }
 
 ////////// FST
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct VecFst<W: Weight> {
     states: Vec<Rc<RefCell<VecState<W>>>>,   //we need to make sure that element indexes are always consistent with arcs
     startstate: Option<usize>,
