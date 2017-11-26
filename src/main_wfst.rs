@@ -13,6 +13,8 @@ use wfst::semiring::floatweight::TropicalWeight;
 use wfst::{Fst, MutableFst, ExpandedFst, Arc};
 use wfst::wfst_vec::{StdArc, VecFst};
 use wfst::algorithms;
+use wfst::wfst_io::{serialise, deserialise, deserialise_wrapper};
+
 
 fn main() {
 
@@ -93,5 +95,13 @@ fn main() {
     fst.set_isyms(vec!("<eps>", "a", "b", "c").iter().map(|x| String::from(*x)));
     fst.set_osyms(vec!("<eps>", "", "", "", "x", "y", "z").iter().map(|x| String::from(*x)));
     println!("{}", fst);
-
+    println!("==============================");
+    let a = serialise(&fst).unwrap();
+    println!("{:?}", a);
+    println!("==============================");
+    let b: VecFst<TropicalWeight<f32>> = deserialise(&a).unwrap();
+    println!("{}", b);
+    println!("==============================");
+    let c = deserialise_wrapper(&a).unwrap();
+    println!("{:?}", c);
 }

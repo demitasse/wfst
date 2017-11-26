@@ -7,6 +7,8 @@ use wfst::semiring::floatweight::{FloatWeight, TropicalWeight, LogWeight, Minmax
 use wfst::wfst_vec::{VecFst};
 use wfst::{MutableFst};
 
+use wfst::wfst_io::{serialise, IOError};//, deserialise};
+
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::error::Error;
@@ -16,23 +18,9 @@ use std::process::exit;
 use std::collections::HashMap;
 
 extern crate serde;
-extern crate serde_json;
 use serde::{Serialize, Deserialize};
-extern crate bincode;
-use bincode::{serialize, deserialize, Infinite};
 
 const EXCODE_BADINPUT: i32 = 2;
-
-#[derive(Debug)]
-pub struct IOError {
-    pub message: String,
-}
-
-impl<T: Error> From<T> for IOError {
-    fn from(e: T) -> IOError {
-        IOError{message: format!("Format error: {}", e.description())}
-    }
-}
 
 fn load_symtab(symfn: String) -> Result<Vec<String>, IOError> {
     //Slurp lines to parsed fields (DEMITMEM)
@@ -174,26 +162,18 @@ fn input<T, W, F>(mut fst: F, isymfn: Option<String>, osymfn: Option<String>, ma
     Ok(fst)
 }
 
-fn output<T: Serialize + Deserialize + Debug>(t: Result<T, IOError>, jsonout: bool) -> Result<(), IOError> {
+fn output<T: Serialize + Deserialize + Debug + 'static>(t: Result<T, IOError>) -> Result<(), IOError> {
     ////Output on STDOUT
     match t {
         Ok(tt) => {
-            println!("{:?}\n", tt);
-            if jsonout {    
-                let encoded = serde_json::to_string(&tt)?;
-                //////////
-                let ww: T = serde_json::from_str(&encoded).unwrap();
-                println!("{:?}\n", ww);
-                //////////
-                println!("{}", encoded);
-            } else {
-                let encoded = serialize(&tt, Infinite)?;
-                //////////
-                let ww: T = deserialize(&encoded).unwrap();
-                println!("{:?}\n", ww);
-                //////////
-                io::stdout().write(&*encoded).ok();
-            }
+            //eprintln!("\n{:?}\n", tt);
+            //eprintln!("////////////////////////////////////////\n");
+            let encoded = serialise(&tt)?;
+            //////////
+            //let ww: T = deserialise(&encoded)?;
+            //eprintln!("{:?}\n", ww);
+            //////////
+            io::stdout().write(&*encoded).ok();
             Ok(())
         },
         Err(e) => Err(e),
@@ -205,7 +185,6 @@ fn main() {
     //Setup defaults and parse args
     let mut p64 = false;
     let mut wtype: Option<usize> = None;
-    let mut jsonout = false;
     let mut mapisyms = false;
     let mut maposyms = false;
     let mut isymfn: Option<String> = None;
@@ -225,26 +204,24 @@ fn main() {
             .add_option(&["-O", "--strsout"], StoreTrue, "Map output symbols using symbol table (default is to read integer symbols)");
         ap.refer(&mut p64)
             .add_option(&["-p", "--precision"], StoreTrue, "Use 64-bit precision for weights (default is 32-bit)");
-        ap.refer(&mut jsonout)
-            .add_option(&["-j", "--json"], StoreTrue, "Output file in JSON format (not recommended JSON does not support inf/NaN -- use only for debugging)");
         ap.parse_args_or_exit();
     }
 
     let semiring = wtype.unwrap_or(0);
     match if p64 {
         match semiring {
-            0 => output(input(VecFst::<TropicalWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-            1 => output(input(VecFst::<LogWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-            2 => output(input(VecFst::<MinmaxWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
+            0 => output(input(VecFst::<TropicalWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms)),
+            1 => output(input(VecFst::<LogWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms)),
+            2 => output(input(VecFst::<MinmaxWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms)),
             _ => { eprintln!("Invalid weight type: {:?}", semiring);
                    exit(EXCODE_BADINPUT);
             },
         }
     } else {
         match semiring {
-            0 => output(input(VecFst::<TropicalWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-            1 => output(input(VecFst::<LogWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-            2 => output(input(VecFst::<MinmaxWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
+            0 => output(input(VecFst::<TropicalWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms)),
+            1 => output(input(VecFst::<LogWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms)),
+            2 => output(input(VecFst::<MinmaxWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms)),
             _ => { eprintln!("Invalid weight type: {:?}", semiring);
                    exit(EXCODE_BADINPUT);
             },
