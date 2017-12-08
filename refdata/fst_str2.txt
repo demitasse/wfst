@@ -1,4 +1,4 @@
 0 1 a x .5
 0 1 b y inf
-1 2 c z inf
+1 2 č 人 inf
 2 3.5

@@ -9,9 +9,8 @@ use wfst::MutableFst;
 use std::any::TypeId;
 use std::fmt::Display;
 use std::fs::File;
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Write, BufWriter};
 use std::process::exit;
-use std::collections::HashMap;
 
 use wfst::wfst_io::IOError;
 
@@ -50,9 +49,13 @@ fn load_symtab(symfn: &str) -> Result<Vec<String>, IOError> {
 }
 
 
-fn save_symtab(symtab: HashMap<String, usize>, symfn: &str) -> Result<(), IOError> {
-    println!("{:?}", symtab);
-    unimplemented!()
+fn save_symtab(symtab: Vec<String>, symfn: &str) -> Result<(), IOError> {
+    let fh = File::create(symfn)?;
+    let mut fh = BufWriter::new(fh);
+    for (i, s) in symtab.into_iter().enumerate() {
+        fh.write(format!("{}\t{}\n", s, i).as_bytes())?;
+    }
+    Ok(())
 }
 
 
@@ -65,11 +68,20 @@ fn wfstprint<W: Weight, F: MutableFst<W> + Display>(mut fst: F, isyms: Option<Ve
         fst.set_osyms(syms);
     }
 
-    // if let Some(symfn) = isymfn {
-    //     let symtab: HashMap<String, usize> = fst.get_isyms().into_iter().enumerate().map(|x| (x.1, x.0)).collect();
-    //     save_symtab(symtab, &symfn);
-    // }
+    if let Some(symfn) = isymfn {
+        if let Some(syms) = fst.get_isyms() {
+            let symtab: Vec<String> = syms.into_iter().collect();
+            save_symtab(symtab, &symfn)?;
+        }
+    }
 
+    if let Some(symfn) = osymfn {
+        if let Some(syms) = fst.get_osyms() {
+            let symtab: Vec<String> = syms.into_iter().collect();
+            save_symtab(symtab, &symfn)?;
+        }
+    }
+    
     if !mapsyms {
         fst.del_isyms();
         fst.del_osyms();
@@ -136,9 +148,6 @@ fn main() {
         None => None,
     };
 
-    //eprintln!("isyms: {:?}", isyms);
-    //eprintln!("osyms: {:?}", osyms);
-    
     match wfstio_autodeserialise_apply!(buffer, fst, wfstprint(fst, isyms, osyms, saveisymfn, saveosymfn, mapsyms)) {
         Ok(_) => (),
         Err(e) => { eprintln!("{}", e.message);
