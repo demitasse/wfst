@@ -83,7 +83,7 @@ fn load_set_syms<T, W, F>(symfn: Option<String>, fst: &mut F, mapsyms: bool, ins
     }
 }
 
-//DEMIT TODO: This should all be moved to relevant implementations of Display at specific Fst and Weight implementations
+//DEMIT TODO: This should all be moved to relevant implementations of FromStr at specific Fst and Weight implementations
 fn input<T, W, F>(mut fst: F, isymfn: Option<String>, osymfn: Option<String>, mapisyms: bool, maposyms: bool) -> Result<F, IOError>
     where T: Float<T> + FromStr,
           T::Err: Error + Debug,
