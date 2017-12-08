@@ -22,6 +22,7 @@ use serde::{Serialize, Deserialize};
 
 const EXCODE_BADINPUT: i32 = 2;
 
+//DEMIT TODO: Remove duplication
 fn load_symtab(symfn: String) -> Result<Vec<String>, IOError> {
     //Slurp lines to parsed fields (DEMITMEM)
     let mut fh = File::open(symfn)?;
@@ -82,6 +83,7 @@ fn load_set_syms<T, W, F>(symfn: Option<String>, fst: &mut F, mapsyms: bool, ins
     }
 }
 
+//DEMIT TODO: This should all be moved to relevant implementations of Display at specific Fst and Weight implementations
 fn input<T, W, F>(mut fst: F, isymfn: Option<String>, osymfn: Option<String>, mapisyms: bool, maposyms: bool) -> Result<F, IOError>
     where T: Float<T> + FromStr,
           T::Err: Error + Debug,
@@ -193,9 +195,9 @@ fn main() {
         let mut ap = ArgumentParser::new();
         ap.set_description("Creates native FSTs from simple text format.");
         ap.refer(&mut isymfn)
-            .add_option(&["-i", "--isymfn"], StoreOption, "Input label symbol table filename");
+            .add_option(&["-i", "--isymfn"], StoreOption, "Input-label symbol table filename");
         ap.refer(&mut osymfn)
-            .add_option(&["-o", "--osymfn"], StoreOption, "Output label symbol table filename");
+            .add_option(&["-o", "--osymfn"], StoreOption, "Output-label symbol table filename");
         ap.refer(&mut wtype)
             .add_option(&["-w", "--wtype"], StoreOption, "Select the weight type (semiring) from (0: Tropical, 1: Log, 2: Minmax -- default is 0)");
         ap.refer(&mut mapisyms)

@@ -228,6 +228,14 @@ impl<W: Weight> MutableFst<W> for VecFst<W> {
         }
         self.osyms = Some(v)
     }
+
+    fn del_isyms(&mut self) {
+        self.isyms = None;
+    }
+
+    fn del_osyms(&mut self) {
+        self.osyms = None;
+    }
 }
 
 impl<W: Weight> ExpandedFst<W> for VecFst<W> {  

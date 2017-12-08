@@ -66,6 +66,8 @@ pub trait MutableFst<W: Weight>: Fst<W> {
     fn set_finalweight(&mut self, id: StateId, finalweight: W);
     fn set_isyms<T: IntoIterator<Item=String>>(&mut self, symtab: T);
     fn set_osyms<T: IntoIterator<Item=String>>(&mut self, symtab: T);
+    fn del_isyms(&mut self);
+    fn del_osyms(&mut self);
 }
 
 pub trait ExpandedFst<W: Weight>: Fst<W> + Clone {

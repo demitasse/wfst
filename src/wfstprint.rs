@@ -3,30 +3,25 @@ use argparse::{ArgumentParser, StoreTrue, StoreOption};
 
 #[macro_use]
 extern crate wfst;
-use wfst::semiring::float::Float;
-use wfst::semiring::floatweight::{FloatWeight, TropicalWeight, LogWeight, MinmaxWeight};
-use wfst::wfst_vec::{VecFst};
-use wfst::{MutableFst};
-
-use wfst::wfst_io::{deserialise, deserialise_wrapper, IOError};
+use wfst::semiring::Weight;
+use wfst::MutableFst;
 
 use std::any::TypeId;
-use std::fmt::Debug;
-use std::str::FromStr;
-use std::error::Error;
+use std::fmt::Display;
 use std::fs::File;
-use std::io::{self, Read, Write, BufRead};
+use std::io::{self, Read, Write};
 use std::process::exit;
 use std::collections::HashMap;
 
-extern crate serde;
-use serde::{Serialize, Deserialize};
+use wfst::wfst_io::IOError;
+
+//needed to use `wfstio_autodeserialise_apply` macro...
 extern crate bincode;
-use self::bincode::{deserialize};
 
 const EXCODE_BADINPUT: i32 = 2;
 
-fn load_symtab(symfn: String) -> Result<Vec<String>, IOError> {
+//DEMIT TODO: Remove duplication
+fn load_symtab(symfn: &str) -> Result<Vec<String>, IOError> {
     //Slurp lines to parsed fields (DEMITMEM)
     let mut fh = File::open(symfn)?;
     let mut s = String::new();
@@ -54,45 +49,34 @@ fn load_symtab(symfn: String) -> Result<Vec<String>, IOError> {
     Ok(syms)
 }
 
-fn load_set_syms<T, W, F>(symfn: Option<String>, fst: &mut F, mapsyms: bool, insym: bool) -> Result<Option<HashMap<String, usize>>, IOError>
-    where T: Float<T>,
-          W: FloatWeight<T>,
-          F: MutableFst<W>,
-{
-    if let Some(tempfn) = symfn {
-        match load_symtab(tempfn) {
-            Ok(syms) =>
-            {
-                if insym {
-                    fst.set_isyms(syms.clone());
-                } else {
-                    fst.set_osyms(syms.clone());
-                }
-                let symtab: HashMap<String, usize> = syms.into_iter().enumerate().map(|x| (x.1, x.0)).collect();
-                if mapsyms {
-                    Ok(Some(symtab))
-                } else {
-                    Ok(None)
-                }
-            },
-            Err(e) => Err(IOError{message: e.message}),
-        }
-    } else {
-        if mapsyms {
-            Err(IOError{message: format!("CLI Option error: cannot map input symbols without specifying a table file")})
-        } else {
-            Ok(None)
-        }
-    }
+
+fn save_symtab(symtab: HashMap<String, usize>, symfn: &str) -> Result<(), IOError> {
+    println!("{:?}", symtab);
+    unimplemented!()
 }
 
 
-fn stdin_wfstprint() -> Result<(), IOError> {
-    let stdin = io::stdin();
-    let mut handle = stdin.lock();
-    let mut buffer = Vec::new();
-    handle.read_to_end(&mut buffer)?;
-    wfstio_autodeserialise_apply!(buffer, fst, println!("{}", fst))
+fn wfstprint<W: Weight, F: MutableFst<W> + Display>(mut fst: F, isyms: Option<Vec<String>>, osyms: Option<Vec<String>>, isymfn: Option<String>, osymfn: Option<String>, mapsyms: bool) -> Result<(), IOError> {
+
+    if let Some(syms) = isyms {
+        fst.set_isyms(syms);
+    }
+    if let Some(syms) = osyms {
+        fst.set_osyms(syms);
+    }
+
+    // if let Some(symfn) = isymfn {
+    //     let symtab: HashMap<String, usize> = fst.get_isyms().into_iter().enumerate().map(|x| (x.1, x.0)).collect();
+    //     save_symtab(symtab, &symfn);
+    // }
+
+    if !mapsyms {
+        fst.del_isyms();
+        fst.del_osyms();
+    }
+    
+    println!("{}", fst);
+    Ok(())
 }
 
 
@@ -121,34 +105,44 @@ fn main() {
         ap.parse_args_or_exit();
     }
 
-    match stdin_wfstprint() {
+    //Slurp STDIN (DEMITMEM)
+    let stdin = io::stdin();
+    let mut handle = stdin.lock();
+    let mut buffer = Vec::new();
+    match handle.read_to_end(&mut buffer) {
+        Ok(_) => (),
+        Err(e) => { eprintln!("{}", e);
+                        exit(EXCODE_BADINPUT);
+        },
+    };
+
+    //Try to load symtabs?
+    let isyms = match isymfn {
+        Some(symfn) => match load_symtab(&symfn) {
+            Ok(syms) => Some(syms),
+            Err(e) => { eprintln!("{}", e.message);
+                        exit(EXCODE_BADINPUT);
+            },
+        },
+        None => None,
+    };
+    let osyms = match osymfn {
+        Some(symfn) => match load_symtab(&symfn) {
+            Ok(syms) => Some(syms),
+            Err(e) => { eprintln!("{}", e.message);
+                        exit(EXCODE_BADINPUT);
+            },
+        },
+        None => None,
+    };
+
+    //eprintln!("isyms: {:?}", isyms);
+    //eprintln!("osyms: {:?}", osyms);
+    
+    match wfstio_autodeserialise_apply!(buffer, fst, wfstprint(fst, isyms, osyms, saveisymfn, saveosymfn, mapsyms)) {
         Ok(_) => (),
         Err(e) => { eprintln!("{}", e.message);
                     exit(EXCODE_BADINPUT);
         },
     };
-
-    //     match semiring {
-    //         0 => output(input(VecFst::<TropicalWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-    //         1 => output(input(VecFst::<LogWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-    //         2 => output(input(VecFst::<MinmaxWeight<f64>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-    //         _ => { eprintln!("Invalid weight type: {:?}", semiring);
-    //                exit(EXCODE_BADINPUT);
-    //         },
-    //     }
-    // } else {
-    //     match semiring {
-    //         0 => output(input(VecFst::<TropicalWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-    //         1 => output(input(VecFst::<LogWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-    //         2 => output(input(VecFst::<MinmaxWeight<f32>>::new(), isymfn, osymfn, mapisyms, maposyms), jsonout),
-    //         _ => { eprintln!("Invalid weight type: {:?}", semiring);
-    //                exit(EXCODE_BADINPUT);
-    //         },
-    //     }
-    // } {
-    //     Ok(_) => (),
-    //     Err(e) => { eprintln!("{}", e.message);
-    //                 exit(EXCODE_BADINPUT);
-    //     },
-    // }
 }
