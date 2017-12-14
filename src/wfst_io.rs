@@ -115,3 +115,49 @@ macro_rules! wfstio_autodeserialise_apply {
         }
     }
 }
+
+#[macro_export]
+macro_rules! wfstio_autodeserialise_apply_naturalless {
+    ($buf:ident, $fst:ident, $e:expr) => { //expression -> Result<(), IOError>
+        match wfst::wfst_io::deserialise_wrapper(&$buf) {
+            Ok(w) => {
+                if w.tid == format!("{:?}", TypeId::of::<wfst::wfst_vec::VecFst<wfst::semiring::floatweight::TropicalWeight<f64>>>()) {
+                    match bincode::deserialize(&w.data) {
+                        Ok(f) => {
+                            let $fst: wfst::wfst_vec::VecFst<wfst::semiring::floatweight::TropicalWeight<f64>> = f;
+                            $e
+                        },
+                        Err(e) => Err(IOError{message: format!("{:?}", e)}),
+                    }
+                } else if w.tid == format!("{:?}", TypeId::of::<wfst::wfst_vec::VecFst<wfst::semiring::floatweight::MinmaxWeight<f64>>>()) {
+                    match bincode::deserialize(&w.data) {
+                        Ok(f) => {
+                            let $fst: wfst::wfst_vec::VecFst<wfst::semiring::floatweight::MinmaxWeight<f64>> = f;
+                            $e
+                        },
+                        Err(e) => Err(IOError{message: format!("{:?}", e)}),
+                    }
+                } else if w.tid == format!("{:?}", TypeId::of::<wfst::wfst_vec::VecFst<wfst::semiring::floatweight::TropicalWeight<f32>>>()) {
+                    match bincode::deserialize(&w.data) {
+                        Ok(f) => {
+                            let $fst: wfst::wfst_vec::VecFst<wfst::semiring::floatweight::TropicalWeight<f32>> = f;
+                            $e
+                        },
+                        Err(e) => Err(IOError{message: format!("{:?}", e)}),
+                    }
+                } else if w.tid == format!("{:?}", TypeId::of::<wfst::wfst_vec::VecFst<wfst::semiring::floatweight::MinmaxWeight<f32>>>()) {
+                    match bincode::deserialize(&w.data) {
+                        Ok(f) => {
+                            let $fst: wfst::wfst_vec::VecFst<wfst::semiring::floatweight::MinmaxWeight<f32>> = f;
+                            $e
+                        },
+                        Err(e) => Err(IOError{message: format!("{:?}", e)}),
+                    }
+                } else {
+                    Err(IOError{message: format!("IO error: Fst type not recognised")})
+                }
+            },
+            Err(e) => Err(IOError{message: e.message}),
+        }
+    }
+}

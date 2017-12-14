@@ -49,5 +49,14 @@ name = "wfstprint"
 path = "src/wfstprint.rs"
 
 [[bin]]
+name = "wfstshortestdists"
+path = "src/wfstshortestdists.rs"
+
+[[bin]]
+name = "wfstshortestpaths"
+path = "src/wfstshortestpaths.rs"
+
+[[bin]]
 name = "example_shortestpath"
 path = "src/example_shortestpath.rs"
+
