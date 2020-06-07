@@ -11,6 +11,9 @@
 //! (`Rc`) See the source file `main_wfst.rs` for simple examples of
 //! intended use.
 
+extern crate serde;
+use self::serde::{Serialize, Deserialize};
+
 use super::*;
 use super::semiring::Weight;
 

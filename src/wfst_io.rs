@@ -13,6 +13,7 @@ use std::error::Error;
 
 extern crate serde;
 use self::serde::{Serialize, Deserialize};
+use self::serde::de::DeserializeOwned;
 extern crate bincode;
 
 
@@ -23,7 +24,7 @@ pub struct IOError {
 
 impl<T: Error> From<T> for IOError {
     fn from(e: T) -> IOError {
-        IOError{message: format!("Format error: {}", e.description())}
+        IOError{message: format!("Format error: {}", e)}
     }
 }
 
@@ -35,8 +36,8 @@ pub struct IOWrapper {
 
 pub fn serialise<T: Serialize + 'static>(d: &T) -> Result<Vec<u8>, IOError> {
     let wrapped = IOWrapper{tid: format!("{:?}", TypeId::of::<T>()),
-                            data: bincode::serialize(d, bincode::Infinite)?};
-    Ok(bincode::serialize(&wrapped, bincode::Infinite)?)
+                            data: bincode::serialize(d)?};
+    Ok(bincode::serialize(&wrapped)?)
 }
 
 
@@ -44,7 +45,7 @@ pub fn deserialise_wrapper(d: &Vec<u8>) -> Result<IOWrapper, IOError> {
     Ok(bincode::deserialize(d)?)
 }
 
-pub fn deserialise<T: Deserialize + 'static>(d: &Vec<u8>) -> Result<T, IOError> {
+pub fn deserialise<T: DeserializeOwned + 'static>(d: &Vec<u8>) -> Result<T, IOError> {
     let wrapped: IOWrapper = bincode::deserialize(d)?;
 
     if wrapped.tid == format!("{:?}", TypeId::of::<T>()) {

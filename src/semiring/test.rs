@@ -12,7 +12,8 @@
 //! simple examples of intended use.
 
 extern crate rand;
-use self::rand::{Rng, StdRng};
+use self::rand::{Rng};
+use self::rand::rngs::{StdRng};
 
 use super::*;
 use super::float::Float;

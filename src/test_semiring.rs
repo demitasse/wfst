@@ -28,7 +28,8 @@
 // """
 
 extern crate rand;
-use rand::{SeedableRng, StdRng};
+use rand::{SeedableRng};
+use rand::rngs::{StdRng};
 
 use std::fmt::Debug;
 
@@ -38,9 +39,10 @@ use wfst::semiring::*;
 use wfst::semiring::floatweight::*;
 
 extern crate serde;
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 extern crate bincode;
-use bincode::{serialize, deserialize, Infinite};
+use bincode::{serialize, deserialize};
 
 // Tests (plus, times, zero, one) defines a commutative semiring.
 fn test_semiring1<T: Weight + Semiring + Commutative>(w1: &T, w2: &T, w3: &T) {
@@ -142,8 +144,8 @@ fn test_equality<T: Weight>(w1: &T, w2: &T, w3: &T) {
     }
 }
 
-fn test_io<T: Weight + Serialize + Deserialize>(w1: &T) {
-    let encoded = serialize(w1, Infinite).unwrap();
+fn test_io<T: Weight + Serialize + DeserializeOwned>(w1: &T) {
+    let encoded = serialize(w1).unwrap();
     let ww = deserialize(&encoded).unwrap();
     assert!(w1.eq(&ww));
 }
@@ -156,9 +158,9 @@ fn test_clone<T: Weight>(w1: &T) {
 // Test a variety of identities and properties that must hold for the
 // Weight implementation to be well-defined.  Note in the tests we use
 // approx_eq() rather than == where the weights might be inexact.
-fn test12<T: RandomWeight + Semiring + Commutative + Idempotent + Path + Debug + Serialize + Deserialize>(rng: &mut StdRng,
-                                                                                                          n_iterations: u32,
-                                                                                                          test_div: bool) {
+fn test12<T: RandomWeight + Semiring + Commutative + Idempotent + Path + Debug + Serialize + DeserializeOwned>(rng: &mut StdRng,
+                                                                                                               n_iterations: u32,
+                                                                                                               test_div: bool) {
     for _ in 0..n_iterations {
         let w1 = rng.genweight::<T>(true);
         let w2 = rng.genweight::<T>(true);
@@ -175,9 +177,9 @@ fn test12<T: RandomWeight + Semiring + Commutative + Idempotent + Path + Debug +
     }
 }
 
-fn test1<T: RandomWeight + Semiring + Commutative + Debug + Serialize + Deserialize>(rng: &mut StdRng,
-                                                                                     n_iterations: u32,
-                                                                                     test_div: bool) {
+fn test1<T: RandomWeight + Semiring + Commutative + Debug + Serialize + DeserializeOwned>(rng: &mut StdRng,
+                                                                                          n_iterations: u32,
+                                                                                          test_div: bool) {
     for _ in 0..n_iterations {
         let w1 = rng.genweight::<T>(true);
         let w2 = rng.genweight::<T>(true);
@@ -195,8 +197,8 @@ fn test1<T: RandomWeight + Semiring + Commutative + Debug + Serialize + Deserial
     
 
 fn main() {
-    let seed: &[_] = &[7,7,7];
-    let mut rng: StdRng = SeedableRng::from_seed(seed);
+    let seed: u64 = 777;
+    let mut rng: StdRng = SeedableRng::seed_from_u64(seed);
 
     let n_iterations = 1000000;
 

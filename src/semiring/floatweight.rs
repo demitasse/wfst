@@ -32,6 +32,9 @@
 //! numbers. See the source files `main_semiring.rs` and
 //! `test_semiring.rs` for simple examples of intended use.
 
+extern crate serde;
+use self::serde::{Serialize, Deserialize};
+
 use super::*;
 use super::float::Float;
 

@@ -20,8 +20,6 @@
 //!
 //!  * OpenFst (http://www.openfst.org)
 //!  * CMU Sphinx (http://cmusphinx.sourceforge.net/)
-#[macro_use]
-extern crate serde_derive;
 
 use std::fmt::Debug;
 

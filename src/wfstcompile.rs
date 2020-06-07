@@ -18,7 +18,8 @@ use std::process::exit;
 use std::collections::HashMap;
 
 extern crate serde;
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 const EXCODE_BADINPUT: i32 = 2;
 
@@ -164,7 +165,7 @@ fn input<T, W, F>(mut fst: F, isymfn: Option<String>, osymfn: Option<String>, ma
     Ok(fst)
 }
 
-fn output<T: Serialize + Deserialize + Debug + 'static>(t: Result<T, IOError>) -> Result<(), IOError> {
+fn output<T: Serialize + DeserializeOwned + Debug + 'static>(t: Result<T, IOError>) -> Result<(), IOError> {
     ////Output on STDOUT
     match t {
         Ok(tt) => {

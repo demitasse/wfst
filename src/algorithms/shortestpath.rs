@@ -37,7 +37,7 @@ use self::serde::Serialize;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 extern crate bincode;
-use self::bincode::{serialize, Infinite};
+use self::bincode::{serialize};
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -73,7 +73,7 @@ impl<W: Weight + Serialize> Eq for Pair<W> {}
 impl<W: Weight + Serialize> Hash for Pair<W> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
-        serialize(&self.1, Infinite).unwrap().hash(state);
+        serialize(&self.1).unwrap().hash(state);
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
